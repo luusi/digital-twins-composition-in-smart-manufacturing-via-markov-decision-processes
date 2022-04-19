@@ -1,13 +1,6 @@
 # Stochastic Service Composition
 
-Implementation of stochastic service composition.
-Paper:
-
-[Brafman, R. I., De Giacomo, G., Mecella, M., & Sardina, S. 
-(2017, November). Service Composition in Stochastic Settings. 
-In Conference of the Italian Association for Artificial Intelligence 
-(pp. 159-171). Springer, Cham.](http://www.diag.uniroma1.it/~degiacom/papers/2017/AIIA17bdms.pdf)
-
+Implementation of Digital Twins Composition in Smart Manufacturing via Markov Decision Processes.
 ## Preliminaries
 
 - Set up the virtual environment. 
@@ -27,17 +20,7 @@ pip install -e .
 - To use rendering functionalities, you will also need to install Graphviz. 
   At [this page](https://www.graphviz.org/download/) you will
   find the releases for all the supported platform.
-  
 
-## Notebooks
-
-To run the notebooks, activate the virtual environment. Then:
-
-```
-jupyter-notebook
-```
-
-Then via the browser go to `examples/notebooks` to open the notebooks.
 
 ## Digital Twins
 
@@ -53,6 +36,25 @@ Then, run:
 ```
 python digital_twins/main.py --config digital_twins/config.json
 ```
+## Experiments
+- To modify characteristics of the Digital Twins go to the page https://bosch-iot-suite.com/.
+
+- Login with the following credentials:
+
+  email: reviewer.dt.research@gmail.com
+
+  password: Reviewer12!
+
+- Then, click on ```Go to the Developer Console```, ```Things``` where there are the list of Digital Twins to edit.
+
+## Run code
+- To establish the connection with the Bosch IoT Things platform, first launch the ```main.py``` file in ```stochastic-service-composition/digital_twins/```. The orchestrator downloads target and services specification, build the composition MDP, and calculates the optimal policy. It connects to the MQTT client and waits for the event from the target service.
+
+- Then, run ```launch_devices.py``` file in ```stochastic-service-composition/digital_twins/Devices/```. The Digital Twins devices are launched and is released the action from the target service and it is sent to the orchestrator.
+
+- The communication between the orchestrator and devices starts and the orchestrator, once receive the action from the target service, dispatches it to the correct service that can perform it.
+
+## Policy Evaluation
 
 ## Tests
 
@@ -67,13 +69,6 @@ To run only the linters:
 - `tox -e isort-check`
 
 Please look at the `tox.ini` file for the full list of supported commands. 
-
-## Docs
-
-To build the docs: `mkdocs build`
-
-To view documentation in a browser: `mkdocs serve`
-and then go to [http://localhost:8000](http://localhost:8000)
 
 ## License
 
