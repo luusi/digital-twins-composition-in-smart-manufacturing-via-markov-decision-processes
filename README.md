@@ -55,6 +55,15 @@ python digital_twins/main.py --config digital_twins/config.json
 
 ## Policy Evaluation
 
+- At each iteration the policy is calculated, since at each step the transition function change due to increased wear of the machines.
+
+- We have two services that perform painting action: the machine one and the human one.
+
+- At the beginning painting machine is chosen since it has lower probability to break (0.95) and low cost of executing the action (-1). At each iteration transition function is increased by 0.05 of probability break and by -1 of cost.
+  
+- The human painting service has no possibility to break but has high cost of performing the action (-5). 
+
+- At a certain point broken probability of painting machine became 0.2 and cost of performing the action -4, so the optimal policy change and the orchestrator choose human service because is more convenient than machine one.  
 ## Tests
 
 To run tests: `tox`
