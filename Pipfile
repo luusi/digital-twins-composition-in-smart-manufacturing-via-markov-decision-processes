@@ -1,0 +1,35 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+
+[dev-packages]
+pytest = "*"
+pytest-cov = "*"
+pytest-randomly = "*"
+tox = "*"
+ipython = "*"
+jupyter = "*"
+flake8 = "*"
+flake8-bugbear = "*"
+flake8-docstrings = "*"
+flake8-eradicate = "*"
+flake8-isort = "*"
+pydocstyle = "*"
+black = "==21.4b2"
+isort = "*"
+pytest-lazy-fixture = "*"
+mypy = "*"
+hypothesis = "*"
+mkdocs = "*"
+mkdocs-material = "*"
+markdown-include = "*"
+pymdown-extensions = "*"
+markdown = "*"
+mknotebooks = "*"
+mkdocs-bibtex = "*"
+
+[requires]
+python_version = "3.8"

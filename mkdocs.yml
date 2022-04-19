@@ -1,0 +1,34 @@
+site_name: Stochastic Service Composition
+repo_name: 'luusi/stochastic-service-composition'
+repo_url: https://github.com/luusi/stochastic-service-composition
+
+nav:
+- Home: index.md
+- Service: notebooks/01-services.ipynb
+- Target: notebooks/02-target.ipynb
+- Composition MDP: notebooks/03-composition-mdp.ipynb
+- Composition MDP (temporary): notebooks/composition-mdp-smaller.ipynb
+- Use Cases: notebooks/04-use-cases.ipynb
+
+plugins:
+- mknotebooks:
+    execute: false
+    write_markdown: false
+    #preamble: ""
+    #enable_default_jupyter_cell_styling: false
+    #enable_default_pandas_dataframe_styling: false
+- search
+
+theme:
+  name: material
+
+markdown_extensions:
+- codehilite
+- pymdownx.arithmatex
+- pymdownx.highlight
+- pymdownx.superfences
+- markdown_include.include:
+    base_path: docs
+
+extra_javascript:
+- 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML'
