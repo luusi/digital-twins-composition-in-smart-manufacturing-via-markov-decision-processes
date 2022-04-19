@@ -44,20 +44,20 @@ python digital_twins/main.py --config digital_twins/config.json
 
   password: Reviewer12!
 
-- Then, click on ```Go to the Developer Console```, ```Things``` where there are the list of Digital Twins to edit, select the specific Things to modify, click on ```JSON``` button and finally on ```Edit``` button.
+- Then, click on ```Go to the Developer Console```, ```Things``` where there is the list of Digital Twins to edit, select the specific Things to modify, click on the ```JSON``` button and finally on the ```Edit``` button.
 
 - Note that the target Digital Twin cannot be modified, because it is linear and represents the step to follow in order to produce ceramics.
 
-- Services Digital Twins can be modified. Both ```attributes``` and ```features``` contain transition function, but since ```attributes``` field contains transition function when machine it is not yet used, cannot be edited. 
+- Services Digital Twins can be modified. Both ```attributes``` and ```features``` contain the transition function, but since the ```attributes``` field contains the transition function when the machine is not yet used, cannot be edited. 
 
-- In ```feautures``` ```transition_function``` properties can be modified, in particular the values of probabilities and costs in order to see how the system behave with different parameters, like for example high probability to break and low cost to perform an action and vice versa.
+- In ```feautures``` ```transition_function``` properties can be modified, in particular the values of probabilities and costs in order to see how the system behaves with different parameters, for example, high probability to break and high cost to perform an action and vice versa.
 ## How run the code
 
-- To establish the connection with the Bosch IoT Things platform, first launch the ```main.py``` file in ```stochastic-service-composition/digital_twins/```. The orchestrator downloads target and services specification, build the composition MDP, and calculates the optimal policy. It connects to the MQTT client and waits for the event from the target service.
+- To establish the connection with the Bosch IoT Things platform, first launch the ```main.py``` file in ```stochastic-service-composition/digital_twins/```. Here, the orchestrator process is defined: it downloads target and services specification, builds the composition MDP, and calculates the optimal policy. It connects to the MQTT client and waits for the event from the target service.
 
-- Then, run ```launch_devices.py``` file in ```stochastic-service-composition/digital_twins/Devices/```. The Digital Twins devices are launched and is released the action from the target service and it is sent to the orchestrator.
+- Then, run ```launch_devices.py``` file in ```stochastic-service-composition/digital_twins/Devices/```. The Digital Twins devices are launched and the action from the target service is released and sent to the orchestrator.
 
-- The communication between the orchestrator and devices starts and the orchestrator, once receive the action from the target service, dispatches it to the correct service that can perform it.
+- The communication between the orchestrator and devices starts and the orchestrator, once receives the action from the target service, dispatches it to the correct service that can perform it.
 
 ## Policy Evaluation
 
