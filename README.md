@@ -48,7 +48,7 @@ python digital_twins/main.py --config digital_twins/config.json
 
 - **Note that:** the target Digital Twin cannot be modified, because it is linear and represents the step to follow in order to produce ceramics.
 
-- Services Digital Twins can be modified. Both ```attributes``` and ```features``` contain the transition function, but since the ```attributes``` field contains the transition function when the machine is not yet used, cannot be edited. 
+- Services Digital Twins can be modified, except the services that can't break (i.e., ```provisioning_service```, ```painting_human_service``` and ```shipping_service```). Both ```attributes``` and ```features``` contain the transition function, but since the ```attributes``` field contains the transition function when the machine is not yet used, cannot be edited. 
 
 - In ```feautures``` ```transition_function``` properties can be modified, in particular the values of probabilities and costs in order to see how the system behaves with different parameters, for example, high probability to break and high cost to perform an action and vice versa.
 ## How run the code
@@ -65,7 +65,7 @@ python digital_twins/main.py --config digital_twins/config.json
 
 - Every machine starts from a low broken probability (0.05) and a low cost to perform a certain action (-1); at each iteration the broken probability increases by 0.05 and the cost increases by -1.
 
-- We show the output of the painting service transition function before and after the service performs _painting_ action.
+- We show an output of the painting service transition function before and after the service performs _painting_ action.
 ```
 Old: {'available': {'painting': [{'done': 0.9, 'broken': 0.1}, -2.0]},
 'broken': {'check_painting': [{'available': 1}, -10]},
@@ -78,15 +78,25 @@ New: {'available': {'painting': [{'done': 0.85, 'broken': 0.15000000000000002}, 
 
 ## Policy Evaluation
 
-- At each iteration the policy is calculated, since at each step the transition function change due to increased wear of the machines.
+- Since at each iteration the transition function change due to increased wear of the machines, also the optimal policy is recalculated.
 
 - We have two services that perform painting action: the machine one and the human one.
 
-- At the beginning painting machine is chosen since it has lower probability to break (0.05) and low cost of executing the action (-1). At each iteration transition function is increased by 0.05 of probability break and by -1 of cost.
+- At the beginning painting machine is chosen because it is not yet worn. 
+
+- In the early iterations, although the broken probability and the cost are increasing, they are not so important to make the optimal policy change. For the orchestrator will be more convenient choose the machine service over the human (see previous output). 
   
 - The human painting service has no possibility to break but has high cost of performing the action (-5). 
 
 - At a certain point broken probability of painting machine became 0.2 and cost of performing the action -4, so the optimal policy change and the orchestrator choose human service because is more convenient than machine one.
+  ``` 
+  Old: {'available': {'painting': [{'done': 0.85, 'broken': 0.15000000000000002}, -3.0]},
+  'broken': {'check_painting': [{'available': 1}, -10]},
+  'done': {'check_painting': [{'available': 1}, 0]}}
+  
+  New: {'available': {'painting': [{'done': 0.8, 'broken': 0.2}, -4.0]},
+  'broken': {'check_painting': [{'available': 1}, -10]},
+  'done': {'check_painting': [{'available': 1}, 0]}}
 
 - We show the output of the main regarding the change in the calculation of new policy (for reasons of space we omit the other states):
 
@@ -124,6 +134,20 @@ New: {'available': {'painting': [{'done': 0.85, 'broken': 0.15000000000000002}, 
 - We observe that the old policy chose for ```painting``` action the service 5 i.e., the painting service, in the calculation of the new policy instead is used service 4 i.e., the human painting service.
 
 - **Note that:** the example that we show in the ceramics production case study happens with the current parameters, all the users who wanted to simulate other case studies could get different results.
+
+## Scheduled maintenance
+
+- Periodically, a scheduled maintenance is implemented for every service. This permits to repair a machine that is broken or simply reset a machine.
+
+- The transition function is restored to the moment when the machine shows no signs of wear.
+
+- We show an output of a scheduled maintenance of a service:
+```
+Updating transition function: {"topic": "com.bosch.services/second_baking_service/things/twin/commands/modify","headers": {"response-required": false},"path":
+ "/features/transition_function/properties/transitions", "value" : {"available": {"second_baking": [{"done": 0.95, "broken": 0.05}, -1]}, "broken": {"check_second_baking": [{"available
+": 1}, -10]}, "done": {"check_second_baking": [{"available": 1}, 0]}}}
+```
+
 ## Tests
 
 To run tests: `tox`
