@@ -46,14 +46,14 @@ python digital_twins/main.py --config digital_twins/config.json
 
 - Then, click on ```Go to the Developer Console```, ```Things``` where there is the list of Digital Twins to edit, select the specific Things to modify, click on the ```JSON``` button and finally on the ```Edit``` button.
 
-- Note that the target Digital Twin cannot be modified, because it is linear and represents the step to follow in order to produce ceramics.
+- **Note that** the target Digital Twin cannot be modified, because it is linear and represents the step to follow in order to produce ceramics.
 
 - Services Digital Twins can be modified. Both ```attributes``` and ```features``` contain the transition function, but since the ```attributes``` field contains the transition function when the machine is not yet used, cannot be edited. 
 
 - In ```feautures``` ```transition_function``` properties can be modified, in particular the values of probabilities and costs in order to see how the system behaves with different parameters, for example, high probability to break and high cost to perform an action and vice versa.
 ## How run the code
 
-- To establish the connection with the Bosch IoT Things platform, first launch the ```main.py``` file in ```stochastic-service-composition/digital_twins/```. Here, the orchestrator process is defined: it downloads target and services specification, builds the composition MDP, and calculates the optimal policy. It connects to the MQTT client and waits for the event from the target service.
+- To establish the connection with the Bosch IoT Things platform, first launch the ```main.py``` file in ```stochastic-service-composition/digital_twins/```. Here, the orchestrator process is defined: it downloads target and services specification that are loaded in the system, builds the composition MDP, and calculates the optimal policy. It connects to the MQTT client and waits for the event from the target service.
 
 - Then, run ```launch_devices.py``` file in ```stochastic-service-composition/digital_twins/Devices/```. The Digital Twins devices are launched and the action from the target service is released and sent to the orchestrator.
 
@@ -69,7 +69,44 @@ python digital_twins/main.py --config digital_twins/config.json
   
 - The human painting service has no possibility to break but has high cost of performing the action (-5). 
 
-- At a certain point broken probability of painting machine became 0.2 and cost of performing the action -4, so the optimal policy change and the orchestrator choose human service because is more convenient than machine one.  
+- At a certain point broken probability of painting machine became 0.2 and cost of performing the action -4, so the optimal policy change and the orchestrator choose human service because is more convenient than machine one.
+
+- We show the output of the main regarding the change in the calculation of new policy (for reasons of space we omit the other states):
+
+  ```
+  old_policy= 's9',
+  'painting'
+  ): 5,
+  ((
+  'available',
+  'available',
+  'available',
+  'available',
+  'done',
+  'available',
+  'available',
+  'available',
+  'available'
+  ),
+  
+  new_policy= 's9',
+  'painting'
+  ): 4,
+  ((
+  'available',
+  'available',
+  'available',
+  'available',
+  'done',
+  'available',
+  'available',
+  'available',
+  'available'
+  ),
+
+- We observe that the old policy chose for ```painting``` action the service 5 i.e., the painting service, in the calculation of the new policy instead is used service 4 i.e., the human painting service.
+
+- **Note that** the example that we show in the ceramics production case study happens with the current parameters, all the users who wanted to simulate other case studies could get different results.
 ## Tests
 
 To run tests: `tox`
