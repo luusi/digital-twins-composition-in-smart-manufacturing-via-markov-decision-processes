@@ -59,13 +59,30 @@ python digital_twins/main.py --config digital_twins/config.json
 
 - The communication between the orchestrator and devices starts and the orchestrator, once receives the action from the target service, dispatches it to the correct service that can perform it.
 
+## Transition Function Evaluation 
+
+- The transition function changes: as the use of the machine increases, its state of wear increases.
+
+- Every machine starts from a low broken probability (0.05) and a low cost to perform a certain action (-1); at each iteration the broken probability increases by 0.05 and the cost increases by -1.
+
+- We show the output of the painting service transition function before and after the service performs _painting_ action.
+```
+Old: {'available': {'painting': [{'done': 0.9, 'broken': 0.1}, -2.0]},
+'broken': {'check_painting': [{'available': 1}, -10]},
+'done': {'check_painting': [{'available': 1}, 0]}}
+
+New: {'available': {'painting': [{'done': 0.85, 'broken': 0.15000000000000002}, -3.0]},
+'broken': {'check_painting': [{'available': 1}, -10]},
+'done': {'check_painting': [{'available': 1}, 0]}}
+``` 
+
 ## Policy Evaluation
 
 - At each iteration the policy is calculated, since at each step the transition function change due to increased wear of the machines.
 
 - We have two services that perform painting action: the machine one and the human one.
 
-- At the beginning painting machine is chosen since it has lower probability to break (0.95) and low cost of executing the action (-1). At each iteration transition function is increased by 0.05 of probability break and by -1 of cost.
+- At the beginning painting machine is chosen since it has lower probability to break (0.05) and low cost of executing the action (-1). At each iteration transition function is increased by 0.05 of probability break and by -1 of cost.
   
 - The human painting service has no possibility to break but has high cost of performing the action (-5). 
 

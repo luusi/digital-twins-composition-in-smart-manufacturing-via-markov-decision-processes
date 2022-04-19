@@ -295,3 +295,6 @@
   'shipping'
   ): 8
 }
+
+Old: {'available': {'painting': [{'done': 0.9, 'broken': 0.1}, -2.0]}, 'broken': {'check_painting': [{'available': 1}, -10]}, 'done': {'check_painting': [{'available': 1}, 0]}}
+New: {'available': {'painting': [{'done': 0.85, 'broken': 0.15000000000000002}, -3.0]}, 'broken': {'check_painting': [{'available': 1}, -10]}, 'done': {'check_painting': [{'available': 1}, 0]}}
