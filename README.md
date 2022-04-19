@@ -36,7 +36,7 @@ Then, run:
 python digital_twins/main.py --config digital_twins/config.json
 ```
 ## Experiments
-- To modify characteristics of the Digital Twins (probabilities of actions and costs of perform an action) and do tests go to the page https://bosch-iot-suite.com/.
+- To modify characteristics of the Digital Twins and do tests go to the page https://bosch-iot-suite.com/.
 
 - Login with the following credentials:
 
@@ -44,9 +44,15 @@ python digital_twins/main.py --config digital_twins/config.json
 
   password: Reviewer12!
 
-- Then, click on ```Go to the Developer Console```, ```Things``` where there are the list of Digital Twins to edit.
+- Then, click on ```Go to the Developer Console```, ```Things``` where there are the list of Digital Twins to edit, select the specific Things to modify, click on ```JSON``` button and finally on ```Edit``` button.
 
+- Note that the target Digital Twin cannot be modified, because it is linear and represents the step to follow in order to produce ceramics.
+
+- Services Digital Twins can be modified. Both ```attributes``` and ```features``` contain transition function, but since ```attributes``` field contains transition function when machine it is not yet used, cannot be edited. 
+
+- In ```feautures``` ```transition_function``` properties can be modified, in particular the values of probabilities and costs in order to see how the system behave with different parameters, like for example high probability to break and low cost to perform an action and vice versa.
 ## How run the code
+
 - To establish the connection with the Bosch IoT Things platform, first launch the ```main.py``` file in ```stochastic-service-composition/digital_twins/```. The orchestrator downloads target and services specification, build the composition MDP, and calculates the optimal policy. It connects to the MQTT client and waits for the event from the target service.
 
 - Then, run ```launch_devices.py``` file in ```stochastic-service-composition/digital_twins/Devices/```. The Digital Twins devices are launched and is released the action from the target service and it is sent to the orchestrator.
