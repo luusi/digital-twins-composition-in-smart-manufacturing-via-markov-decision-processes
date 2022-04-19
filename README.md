@@ -21,7 +21,6 @@ pip install -e .
   At [this page](https://www.graphviz.org/download/) you will
   find the releases for all the supported platform.
 
-
 ## Digital Twins
 
 The folder `digital_twins` contains the integration of the 
