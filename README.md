@@ -1,13 +1,21 @@
 # Stochastic Service Composition
 
 Implementation of Digital Twins Composition in Smart Manufacturing via Markov Decision Processes.
+
 ## Preliminaries
+
+We assume the review uses a UNIX-like machine and that has Python 3.8 installed.
 
 - Set up the virtual environment. 
 First, install [Pipenv](https://pipenv-fork.readthedocs.io/en/latest/).
 Then:
 ```
 pipenv install --dev
+```
+                    
+- this command is to start a shell within the Python virtual environment (to be done whenever a new terminal is opened):
+```
+pipenv shell
 ```
 
 - Install the Python package in development mode:
@@ -21,28 +29,16 @@ pip install -e .
   At [this page](https://www.graphviz.org/download/) you will
   find the releases for all the supported platform.
 
-## Digital Twins
 
-The folder `digital_twins` contains the integration of the 
-stochastic service composition with the Bosch IoT Things platform.
+## Instructions to reproduce the experiments
 
-To run the examples, go to the terminal and set:
-```
-export PYTHONPATH=".:$PYTHONPATH"
-```
-
-Then, run:
-```
-python digital_twins/main.py --config digital_twins/config.json
-```
-## Experiments
-- To modify characteristics of the Digital Twins and do tests go to the page https://bosch-iot-suite.com/.
+- To modify the parameters of the Digital Twins and do tests go to the page [https://bosch-iot-suite.com/](https://bosch-iot-suite.com/).
 
 - Login with the following credentials:
 
-  email: reviewer.dt.research@gmail.com
+  email: `reviewer.dt.research@gmail.com`
 
-  password: Reviewer12!
+  password: `Reviewer12!`
 
 - Then, click on ```Go to the Developer Console```, ```Things``` where there is the list of Digital Twins to edit, select the specific Things to modify, click on the ```JSON``` button and finally on the ```Edit``` button.
 
@@ -51,11 +47,21 @@ python digital_twins/main.py --config digital_twins/config.json
 - Services Digital Twins can be modified, except the services that can't break (i.e., ```provisioning_service```, ```painting_human_service``` and ```shipping_service```). Both ```attributes``` and ```features``` contain the transition function, but since the ```attributes``` field contains the transition function when the machine is not yet used, cannot be edited. 
 
 - In ```feautures``` ```transition_function``` properties can be modified, in particular the values of probabilities and costs in order to see how the system behaves with different parameters, for example, high probability to break and high cost to perform an action and vice versa.
-## How run the code
+
+## How to run the code
 
 - To establish the connection with the Bosch IoT Things platform, first launch the ```main.py``` file in ```stochastic-service-composition/digital_twins/```. Here, the orchestrator process is defined: it downloads target and services specification that are loaded in the system, builds the composition MDP, and calculates the optimal policy. It connects to the MQTT client and waits for the event from the target service.
 
+      export PYTHONPATH=".:$PYTHONPATH"
+      cd digital_twins
+      python main.py --config config.json
+
+  and wait until `Waiting for messages from target...` appears in the standard output.
+
 - Then, run ```launch_devices.py``` file in ```stochastic-service-composition/digital_twins/Devices/```. The Digital Twins devices are launched and the action from the target service is released and sent to the orchestrator.
+
+      export PYTHONPATH=".:$PYTHONPATH"
+      python digital_twins/Devices/launch_devices.py
 
 - The communication between the orchestrator and devices starts and the orchestrator, once receives the action from the target service, dispatches it to the correct service that can perform it.
 
@@ -63,7 +69,7 @@ python digital_twins/main.py --config digital_twins/config.json
 
 - The transition function changes: as the use of the machine increases, its state of wear increases.
 
-- Every machine starts from a low broken probability (0.05) and a low cost to perform a certain action (-1); at each iteration the broken probability increases by 0.05 and the cost increases by -1.
+- Every machine starts from a low broken probability (0.05) and a low cost to perform a certain action (-1); at each iteration the broken probability increases by 0.05 and the cost increases by 1.
 
 - We show an output of the painting service transition function before and after the service performs _painting_ action.
 ```
@@ -71,7 +77,7 @@ Old: {'available': {'painting': [{'done': 0.9, 'broken': 0.1}, -2.0]},
 'broken': {'check_painting': [{'available': 1}, -10]},
 'done': {'check_painting': [{'available': 1}, 0]}}
 
-New: {'available': {'painting': [{'done': 0.85, 'broken': 0.15000000000000002}, -3.0]},
+New: {'available': {'painting': [{'done': 0.85, 'broken': 0.15}, -3.0]},
 'broken': {'check_painting': [{'available': 1}, -10]},
 'done': {'check_painting': [{'available': 1}, 0]}}
 ``` 
@@ -97,39 +103,36 @@ New: {'available': {'painting': [{'done': 0.85, 'broken': 0.15000000000000002}, 
   New: {'available': {'painting': [{'done': 0.8, 'broken': 0.2}, -4.0]},
   'broken': {'check_painting': [{'available': 1}, -10]},
   'done': {'check_painting': [{'available': 1}, 0]}}
+  ```
 
 - We show the output of the main regarding the change in the calculation of new policy (for reasons of space we omit the other states):
 
   ```
-  old_policy= 's9',
-  'painting'
-  ): 5,
-  ((
-  'available',
-  'available',
-  'available',
-  'available',
-  'done',
-  'available',
-  'available',
-  'available',
-  'available'
-  ),
+  old_policy: in state ((
+    'available',
+    'available',
+    'available',
+    'available',
+    'available',
+    'available',
+    'available',
+    'available',
+    'available'),
+   's9',
+   'painting'), take action '4'.
   
-  new_policy= 's9',
-  'painting'
-  ): 4,
-  ((
-  'available',
-  'available',
-  'available',
-  'available',
-  'done',
-  'available',
-  'available',
-  'available',
-  'available'
-  ),
+  new_policy: in state ((
+    'available',
+    'available',
+    'available',
+    'available',
+    'available',
+    'available',
+    'available',
+    'available',
+    'available'),
+   's9',
+   'painting'), take action '5'.
 
 - We observe that the old policy chose for ```painting``` action the service 5 i.e., the painting service, in the calculation of the new policy instead is used service 4 i.e., the human painting service.
 
@@ -148,22 +151,11 @@ Updating transition function: {"topic": "com.bosch.services/second_baking_servic
 ": 1}, -10]}, "done": {"check_second_baking": [{"available": 1}, 0]}}}
 ```
 
-## Tests
+- In the standard output of the `main.py` process, after `Sending msg for scheduled maintenance`, if the `painting_service`
+  was enough degradated, you will see an `Optimal Policy has changed!` message because its broken probability and cost
+  returned at its original values.
 
-To run tests: `tox`
 
-To run only the code tests: `tox -e py3.7`
-
-To run only the linters: 
-- `tox -e flake8`
-- `tox -e mypy`
-- `tox -e black-check`
-- `tox -e isort-check`
-
-Please look at the `tox.ini` file for the full list of supported commands. 
-
-## License
-
-`stochastic_service_composition` is released under the MIT license.
-
-Copyright 2021 Luciana Silo
+Note that it could also happen that the scheduled maintenance does not change the optimal policy because the
+`painting_service` became broken in a previous call of the service and, after transitioning in the `broken` state,
+it was already repaired in the following `check` action, and therefore the maintenance step becomes redundant.

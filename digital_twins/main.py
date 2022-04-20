@@ -1,6 +1,8 @@
 import argparse
 import asyncio
+import copy
 import json
+import time
 import urllib.parse
 from typing import Dict
 
@@ -90,7 +92,7 @@ async def main(config: str, timeout: int):
             if old_policy is None:
                 old_policy = orchestrator_policy
             if old_policy.policy_data != orchestrator_policy.policy_data:
-                print(f"fOptimal Policy has changed!\nold_policy = {old_policy}\nnew_policy={orchestrator_policy}")
+                print(f"Optimal Policy has changed!\nold_policy = {old_policy}\nnew_policy={orchestrator_policy}")
             old_policy = orchestrator_policy
 
             # waiting for target action
@@ -99,7 +101,7 @@ async def main(config: str, timeout: int):
             target_message_json = json.loads(target_message)
             event = Event.from_message(target_message_json)
             if event.from_ != target_thing_id or event.type != EventType.MODIFIED or event.feature != "current_action":
-                #print(f"Skipping, not a message from the target: {target_message_json}")
+                # print(f"Skipping, not a message from the target: {target_message_json}")
                 continue
             print(f"Received message: {target_message_json}")
             print(f"Event parsed: {event}")
@@ -145,11 +147,17 @@ async def main(config: str, timeout: int):
             services[service_index] = new_service
             if old_transition_function != new_service.current_transition_function:
                 print(f"Transition function has changed!\nOld: {old_transition_function}\nNew: {new_service.transition_function}")
-            if iteration == 28:
+
+            # execute the target loop ~four times before starting the maintenance
+            if iteration % (14 * 4) == 0:
                 print("Sending msg for scheduled maintenance")
                 for element in service_ids:
                     api.send_message_to_thing(element, "Scheduled_maintenance", {}, timeout)
-
+                # reset current state and transition function
+                for s in services:
+                    s.reset()
+                # reset system state (but not target state)
+                system_state = [service.initial_state for service in services]
 
 if __name__ == "__main__":
     arguments = parser.parse_args()

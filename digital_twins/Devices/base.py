@@ -225,7 +225,7 @@ class BoschIotService(BoschIoTDevice):
 
     def execute_command(self, name: Action):
         starting_state = self._current_state
-        transitions_from_current_state = self._service.transition_function[starting_state]
+        transitions_from_current_state = self.wrapper.transition_function[starting_state]
         next_service_states, reward = transitions_from_current_state[name]
         states, probabilities = zip(*next_service_states.items())
         new_state = random.choices(states, probabilities)[0]
@@ -236,9 +236,11 @@ class BoschIotService(BoschIoTDevice):
         self.update_transition_function("transition_function", transition_function)
 
     def execute_maintenance(self, maintenance: str):
-        starting_state = self._service.initial_state
+        self.wrapper.reset()
+        # now current state is initial state
+        starting_state = self.wrapper.current_state
         self.update_state("current_state", starting_state)
-        transition_function = self._service.transition_function
+        transition_function = self.wrapper.transition_function
         self.update_transition_function("transition_function", transition_function)
 
     def update_state(self, feature, value):
