@@ -40,9 +40,9 @@ pip install -e .
 
   password: `Reviewer12!`
 
-- The architecture of Digital Twins is defined in the ```Industry_4.0_scenario``` subscription, which is shown after logging into the platform.
+- The architecture of Digital Twins is defined in the ```Industry4.0_scenario``` subscription, which is shown after logging into the platform.
 
-- Click on ```Go to the Developer Console```, ```Things``` where there is the list of Digital Twins to edit, select the specific Things to modify, click on the ```JSON``` button and finally on the ```Edit``` button.
+- Click on ```Go to the Developer Console```, ```Devices``` where there is the list of Digital Twins to edit, select the specific Things to modify, click on the ```JSON``` button and finally on the ```Edit``` button.
 
 - **Note that:** the target Digital Twin cannot be modified, because it is linear and represents the step to follow in order to produce ceramics.
 
