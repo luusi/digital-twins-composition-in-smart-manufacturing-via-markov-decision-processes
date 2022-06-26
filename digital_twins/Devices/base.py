@@ -15,7 +15,7 @@ from stochastic_service_composition.types import State, Action
 from stochastic_service_composition.target import Target
 
 DEVICE_ID_PREFIX = "com.bosch.service"
-TENANT_ID = "tfa68b9aa54954df39c13e1a2425fed3b_hub"
+TENANT_ID = "te4932eb54bc14dcea1e6579f552819ee_hub"
 HUB_ADAPTER_HOST = "mqtt.bosch-iot-hub.com"
 CERTIFICATE_PATH_ID = "./iothub.crt"
 DEVICE_PASSWORD_ID = "secret"
