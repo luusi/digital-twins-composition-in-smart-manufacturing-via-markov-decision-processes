@@ -7,7 +7,7 @@ from digital_twins.things_api import config_from_json, ThingsAPI
 
 def run_device(device_name, path_to_json: Path = Path("config.json"), is_target: bool = False):
     certificate_path = "digital_twins/Devices/iothub.crt"
-    thing_id = f"com.bosch.service:{device_name}"
+    thing_id = f"com.bosch.services:{device_name}"
 
     config_path = Path(path_to_json)
     config = config_from_json(config_path)

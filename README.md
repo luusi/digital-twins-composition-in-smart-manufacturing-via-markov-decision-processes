@@ -40,7 +40,7 @@ pip install -e .
 
   password: `Reviewer12!`
 
-- The architecture of Digital Twins is defined in the ```Industry_4.0_scenario``` subscription, which is shown after logging into the platform.
+- The architecture of Digital Twins is defined in the ```Industry4.0_scenario``` subscription, which is shown after logging into the platform.
 
 - Click on ```Go to the Developer Console```, ```Devices``` where there is the list of Digital Twins to edit, select the specific Device to modify, click on the ```JSON``` button and finally on the ```Edit``` button.
 
