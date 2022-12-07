@@ -13,6 +13,27 @@ paths:
       responses:
         200:
           description: Healthy
+  "/services/{service_id}":
+    get:
+      tags: [Services]
+      operationId: app.api.get_service
+      summary: Get a single pet
+      parameters:
+        - in: path
+          name: service_id
+          schema:
+            $ref: '#/components/schemas/serviceId'
+          required: true
+          description: Service ID
+      responses:
+        200:
+          description: Return service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+        404:
+          description: Service does not exist
 
 components:
   schemas:

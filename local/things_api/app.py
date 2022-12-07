@@ -1,15 +1,27 @@
 #!/usr/bin/env python3
 import logging
+from typing import Dict
 
 import connexion
+
+from local.things_api.data import ServiceInstance
+from local.things_api.helpers import ServiceId
 
 logging.basicConfig(level=logging.INFO)
 
 
 class ApiServer:
 
+    SERVICES: Dict[ServiceId, ServiceInstance] = {}
+
     def get_health(self):
         return "Healthy"
+
+    def get_service(self, service_id: str):
+        service_id = ServiceId(service_id)
+        if service_id not in self.SERVICES:
+            return f'Service with id {service_id} not found', 404
+        return self.SERVICES[service_id]
 
 
 api = ApiServer()
