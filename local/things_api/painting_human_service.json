@@ -1,0 +1,49 @@
+{
+  "id": "painting_human_service",
+  "attributes": {
+    "type": "service",
+    "transitions": {
+      "available": {
+        "painting": [
+          {
+            "done": 1
+          },
+          -5
+        ]
+      },
+      "done": {
+        "check_painting": [
+          {
+            "available": 1
+          },
+          0
+        ]
+      }
+    },
+    "initial_state": "available",
+    "final_states": [
+      "available"
+    ]
+  },
+  "features": {
+    "transition_function": {
+      "available": {
+        "painting": [
+          {
+            "done": 1
+          },
+          -5
+        ]
+      },
+      "done": {
+        "check_painting": [
+          {
+            "available": 1
+          },
+          0
+        ]
+      }
+    },
+    "current_state": "available"
+  }
+}

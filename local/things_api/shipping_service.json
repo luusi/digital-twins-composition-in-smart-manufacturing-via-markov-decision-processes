@@ -1,0 +1,33 @@
+{
+  "id": "shipping_service",
+  "attributes": {
+    "type": "service",
+    "transitions": {
+      "available": {
+        "shipping": [
+          {
+            "available": 1
+          },
+          -1
+        ]
+      }
+    },
+    "initial_state": "available",
+    "final_states": [
+      "available"
+    ]
+    },
+  "features": {
+    "transition_function": {
+      "available": {
+        "shipping": [
+          {
+            "available": 1
+          },
+          -1
+        ]
+      }
+    },
+    "current_state": "available"
+  }
+}
