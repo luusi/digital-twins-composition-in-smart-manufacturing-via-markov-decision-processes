@@ -1,12 +1,9 @@
-swagger: '2.0'
+openapi: '3.0.0'
 info:
   title: Things API
   version: "0.1.0"
   description: A local service able to handle registration and dispatching of messages among connected devices.
-consumes:
-  - application/json
-produces:
-  - application/json
+
 paths:
   /health:
     get:
@@ -16,3 +13,88 @@ paths:
       responses:
         200:
           description: Healthy
+
+components:
+  schemas:
+    serviceId:
+      type: string
+      pattern: "^[A-Za-z0-9]+$"
+    stateName:
+      type: string
+      pattern: "^[A-Za-z0-9]+$"
+    actionName:
+      type: string
+      pattern: "^[A-Za-z0-9]+$"
+    deviceType:
+      type: string
+      enum:
+        - "service"
+    reward:
+      type: number
+    probability:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+    probDistribution:
+      type: object
+      description: A mapping from states to probability. Requires validation of values (sum equal to 1).
+      additionalProperties:
+        $ref: '#/components/schemas/probability'
+    rewardAndProbDistribution:
+      type: array
+      description: A pair (probDistribution, reward) (requires external validation)
+      minItems: 2
+      maxItems: 2
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/probDistribution'
+          - $ref: '#/components/schemas/reward'
+    TransitionsByAction:
+      type: object
+      description: a mapping from action to transitions and rewards
+      additionalProperties:
+        $ref: "#/components/schemas/rewardAndProbDistribution"
+    TransitionFunction:
+      type: object
+      description: a mapping from states to a dictionary of transitions by actions
+      additionalProperties:
+        $ref: "#/components/schemas/TransitionsByAction"
+    StatesSet:
+      type: array
+      items:
+        $ref: "#/components/schemas/stateName"
+    Service:
+      type: object
+      required:
+        - id
+        - features
+        - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/serviceId'
+        attributes:
+          type: object
+          required:
+            - type
+            - transitions
+            - initial_state
+            - final_states
+          properties:
+            type:
+              $ref: "#/components/schemas/deviceType"
+            transitions:
+               $ref: "#/components/schemas/TransitionFunction"
+            initial_state:
+              $ref: "#/components/schemas/stateName"
+            final_states:
+              $ref: "#/components/schemas/StatesSet"
+        features:
+          type: object
+          required:
+            - current_state
+            - transition_function
+          properties:
+            current_state:
+              $ref: "#/components/schemas/stateName"
+            transition_function:
+              $ref: "#/components/schemas/TransitionFunction"
