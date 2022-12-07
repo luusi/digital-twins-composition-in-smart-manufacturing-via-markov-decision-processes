@@ -2,6 +2,12 @@
 
 Implementation of Digital Twins Composition in Smart Manufacturing via Markov Decision Processes.
 
+The following sections are:
+- Preliminaries
+- Instructions to reproduce the experiments
+- (DEPRECATED) Instructions to reproduce the experiments (kept for reference)
+
+
 ## Preliminaries
 
 We assume the review uses a UNIX-like machine and that has Python 3.8 installed.
@@ -29,8 +35,15 @@ pip install -e .
   At [this page](https://www.graphviz.org/download/) you will
   find the releases for all the supported platform.
 
-
 ## Instructions to reproduce the experiments
+
+TODO
+
+
+## (DEPRECATED) Instructions to reproduce the experiments
+
+**WARNING: this section documents the previous version of the experiments, that used Bosch IoT Things.
+We now changed the experimental setup by using a local service that replaces Bosch IoT Things.**
 
 - To modify the parameters of the Digital Twins and do tests go to the page [https://bosch-iot-suite.com/](https://bosch-iot-suite.com/).
 
