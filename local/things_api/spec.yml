@@ -1,0 +1,18 @@
+swagger: '2.0'
+info:
+  title: Things API
+  version: "0.1.0"
+  description: A local service able to handle registration and dispatching of messages among connected devices.
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /health:
+    get:
+      tags: [Health]
+      operationId: app.api.get_health
+      summary: Health check
+      responses:
+        200:
+          description: Healthy
