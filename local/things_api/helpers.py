@@ -33,4 +33,4 @@ class RegexConstrainedString(str):
 
 class ServiceId(RegexConstrainedString):
 
-    REGEX = re.compile("^[A-Za-z0-9]+$")
+    REGEX = re.compile("^[A-Za-z0-9-_]+$")

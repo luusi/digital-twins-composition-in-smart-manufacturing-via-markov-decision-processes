@@ -3,9 +3,11 @@ import logging
 from typing import Dict
 
 import connexion
+from connexion import NoContent
 
 from local.things_api.data import ServiceInstance
 from local.things_api.helpers import ServiceId
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,10 +20,25 @@ class ApiServer:
         return "Healthy"
 
     def get_service(self, service_id: str):
+        logging.info(f"Called 'get_service' with ID: {service_id}")
         service_id = ServiceId(service_id)
         if service_id not in self.SERVICES:
             return f'Service with id {service_id} not found', 404
-        return self.SERVICES[service_id]
+        return self.SERVICES[service_id].json
+
+    def put_service(self, service_id: str, body: Dict):
+        logging.info(f"Called 'put_service' with input: {service_id}, {body}")
+        service_id = ServiceId(service_id)
+        exists = service_id in self.SERVICES
+        service_instance = ServiceInstance.from_json(body)
+        if service_id != service_instance.service_id:
+            return f"service_id in body is not equal to path parameter: {service_id} != {service_instance.service_id}", 400
+        if exists:
+            logging.info('Updating service %s..', service_id)
+        else:
+            logging.info('Creating service %s...', service_id)
+        self.SERVICES[service_id] = service_instance
+        return NoContent, (200 if exists else 201)
 
 
 api = ApiServer()

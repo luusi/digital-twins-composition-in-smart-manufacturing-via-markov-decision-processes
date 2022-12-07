@@ -31,7 +31,7 @@ class ServiceInstance:
 
         transitions = obj["attributes"]["transitions"]
         initial_state = obj["attributes"]["initial_state"]
-        final_states = obj["attributes"]["final_states"]
+        final_states = set(obj["attributes"]["final_states"])
         service = build_service_from_transitions(transitions, initial_state, final_states)
         return ServiceInstance(
             service_id,
@@ -42,7 +42,7 @@ class ServiceInstance:
         )
 
     @property
-    def to_json(self) -> Dict:
+    def json(self) -> Dict:
         """Get the service instance in JSON format."""
         result = dict()
 

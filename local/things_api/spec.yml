@@ -19,12 +19,7 @@ paths:
       operationId: app.api.get_service
       summary: Get a single pet
       parameters:
-        - in: path
-          name: service_id
-          schema:
-            $ref: '#/components/schemas/serviceId'
-          required: true
-          description: Service ID
+        - $ref: '#/components/parameters/serviceId'
       responses:
         200:
           description: Return service
@@ -34,18 +29,45 @@ paths:
                 $ref: '#/components/schemas/Service'
         404:
           description: Service does not exist
+    put:
+      tags: [Services]
+      operationId: app.api.put_service
+      summary: Create or update a service
+      parameters:
+        - $ref: '#/components/parameters/serviceId'
+      requestBody:
+        description: Service
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Service'
+      responses:
+        200:
+          description: Service updated
+        201:
+          description: New service created
 
 components:
+  parameters:
+    serviceId:
+      in: path
+      name: service_id
+      schema:
+        $ref: '#/components/schemas/serviceId'
+      required: true
+      description: Service ID
+
   schemas:
     serviceId:
       type: string
-      pattern: "^[A-Za-z0-9]+$"
+      pattern: "^[A-Za-z0-9-_]+$"
     stateName:
       type: string
-      pattern: "^[A-Za-z0-9]+$"
+      pattern: "^[A-Za-z0-9-_]+$"
     actionName:
       type: string
-      pattern: "^[A-Za-z0-9]+$"
+      pattern: "^[A-Za-z0-9-_]+$"
     deviceType:
       type: string
       enum:
