@@ -19,6 +19,9 @@ class ApiServer:
     def get_health(self):
         return "Healthy"
 
+    def get_services(self):
+        return [service.json for service in self.SERVICES.values()], 200
+
     def get_service(self, service_id: str):
         logging.info(f"Called 'get_service' with ID: {service_id}")
         service_id = ServiceId(service_id)
@@ -39,6 +42,16 @@ class ApiServer:
             logging.info('Creating service %s...', service_id)
         self.SERVICES[service_id] = service_instance
         return NoContent, (200 if exists else 201)
+
+    def delete_service(self, service_id: str):
+        logging.info(f"Called 'delete_service' with input: {service_id}")
+        service_id = ServiceId(service_id)
+        if service_id in self.SERVICES:
+            logging.info('Deleting service %s...', service_id)
+            self.SERVICES.pop(service_id)
+            return NoContent, 204
+        else:
+            return NoContent, 404
 
 
 api = ApiServer()

@@ -13,6 +13,21 @@ paths:
       responses:
         200:
           description: Healthy
+  /services:
+    get:
+      tags: [ Services ]
+      operationId: app.api.get_services
+      summary: Get all services
+      responses:
+        200:
+          description: Return services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Service'
+
   "/services/{service_id}":
     get:
       tags: [Services]
@@ -47,6 +62,18 @@ paths:
           description: Service updated
         201:
           description: New service created
+    delete:
+      tags: [Services]
+      operationId: app.api.delete_service
+      summary: Remove a service
+      parameters:
+        - $ref: '#/components/parameters/serviceId'
+      responses:
+        204:
+          description: Service was deleted
+        404:
+          description: Service does not exist
+
 
 components:
   parameters:
