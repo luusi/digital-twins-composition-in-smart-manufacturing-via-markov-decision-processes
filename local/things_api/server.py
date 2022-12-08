@@ -13,8 +13,7 @@ from websockets.exceptions import ConnectionClosedOK
 
 from local.things_api.data import ServiceInstance
 from local.things_api.helpers import ServiceId
-from local.things_api.messages import from_json, Message, Register
-
+from local.things_api.messages import from_json, Message, Register, Update
 
 logging.basicConfig(level=logging.INFO)
 
@@ -88,9 +87,14 @@ class WebsocketServer:
                 message = from_json(message_json)
                 await self._handle(message, websocket)
         except ConnectionClosedOK:
-            service_id = self.registry.id_by_sockets[websocket]
-            logging.info(f"Service {service_id} disconnected, removing it...")
-            self.registry.remove_service(service_id)
+            if websocket in self.registry.id_by_sockets:
+                # service registered, removing it
+                service_id = self.registry.id_by_sockets[websocket]
+                logging.info(f"Service {service_id} disconnected, removing it...")
+                self.registry.remove_service(service_id)
+            else:
+                # it was not registered yet
+                logging.info(f"closing connectino with {websocket.remote_address}")
         except Exception:
             raise
 
@@ -103,6 +107,16 @@ class WebsocketServer:
         """Handle the register message."""
         self.registry.add_service(register.service_instance, websocket)
         logging.info(f"Registered service {register.service_instance.service_id}")
+
+    @_handle.register
+    async def _handle_update(self, update: Update, websocket: WebSocket) -> None:
+        """Handle the update message."""
+        try:
+            self.registry.update_service(update.service_instance.service_id, update.service_instance)
+            logging.info(f"Updated service {update.service_instance.service_id}")
+        except Exception as e:
+            logging.error(f"An error occurred while updating the service: {e}")
+            await websocket.close()
 
     def start(self):
         self._thread.start()

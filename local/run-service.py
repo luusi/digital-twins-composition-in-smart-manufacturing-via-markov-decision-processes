@@ -8,7 +8,7 @@ import click
 import websockets
 
 from local.things_api.data import ServiceInstance
-from local.things_api.messages import Register, to_json
+from local.things_api.messages import Register, to_json, Update
 
 
 async def async_main(spec: Path):
