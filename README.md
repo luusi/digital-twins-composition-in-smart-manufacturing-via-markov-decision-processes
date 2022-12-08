@@ -42,7 +42,21 @@ pip install -e .
 
 ## Instructions to reproduce the experiments
 
-TODO
+- Run the HTTP server that acts as service repository and communication middleware:
+```
+python local/things_api/app.py
+```
+
+- Run all the services and the target service:
+```
+./local/run-all-services.sh
+```
+
+- Run the orchestrator
+```
+python local/main.py
+```
+
 
 
 ## (DEPRECATED) Instructions to reproduce the experiments

@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import signal
-from asyncio import AbstractEventLoop
+from asyncio import AbstractEventLoop, CancelledError
 from functools import singledispatchmethod
 from threading import Thread
 from typing import Dict, Optional, List, cast
@@ -13,12 +13,13 @@ from websockets.exceptions import ConnectionClosedOK
 
 from local.things_api.client_wrapper import WebSocketWrapper
 from local.things_api.data import ServiceInstance, target_to_json, TargetInstance
-from local.things_api.helpers import ServiceId, TargetId
+from local.things_api.helpers import ServiceId, TargetId, setup_logger
 from local.things_api.messages import from_json, Message, Register, Update, RegisterTarget, RequestTargetAction, \
     ResponseTargetAction, ExecuteServiceAction, ExecutionResult
 from stochastic_service_composition.target import Target
 
-logging.basicConfig(level=logging.INFO)
+
+logger = setup_logger(name="server")
 
 
 class ServiceRegistry:
@@ -123,23 +124,25 @@ class WebsocketServer:
             while True:
                 await asyncio.Future()
         except ConnectionClosedOK:
-            if websocket in self.registry.service_id_by_sockets:
-                # service registered, removing it
-                service_id = self.registry.service_id_by_sockets[websocket]
-                logging.info(f"Service {service_id} disconnected, removing it...")
-                self.registry.remove_service(service_id)
-            if websocket in self.registry.target_id_by_sockets:
-                # target registered, removing it
-                target_id = self.registry.target_id_by_sockets[websocket]
-                logging.info(f"Service {target_id} disconnected, removing it...")
-                self.registry.remove_target(target_id)
-            else:
-                # it was not registered yet
-                logging.info(f"closing connection with {websocket.remote_address}")
-                await websocket.close()
+            logger.info(f"Closed connection with {websocket.remote_address}")
+        except CancelledError:
+            logger.info(f"Tearing down server")
         except Exception as e:
-            logging.error(f"an error occurred: {e}")
-            await websocket.close()
+            logger.error(f"an error occurred: {e}")
+        finally:
+            await self._unsubscribe(websocket)
+
+    async def _unsubscribe(self, websocket: WebSocket):
+        if websocket in self.registry.service_id_by_sockets:
+            # service registered, removing it
+            service_id = self.registry.service_id_by_sockets[websocket]
+            logger.info(f"Service {service_id} disconnected, removing it...")
+            self.registry.remove_service(service_id)
+        if websocket in self.registry.target_id_by_sockets:
+            # target registered, removing it
+            target_id = self.registry.target_id_by_sockets[websocket]
+            logger.info(f"Service {target_id} disconnected, removing it...")
+            self.registry.remove_target(target_id)
 
     @singledispatchmethod
     async def _handle(self, message: Message, websocket: WebSocket) -> None:
@@ -149,23 +152,23 @@ class WebsocketServer:
     async def _handle_register(self, register: Register, websocket: WebSocket) -> None:
         """Handle the register message."""
         self.registry.add_service(register.service_instance, websocket)
-        logging.info(f"Registered service {register.service_instance.service_id}")
+        logger.info(f"Registered service {register.service_instance.service_id}")
 
     @_handle.register
     async def _handle_update(self, update: Update, websocket: WebSocket) -> None:
         """Handle the update message."""
         try:
             self.registry.update_service(update.service_instance.service_id, update.service_instance)
-            logging.info(f"Updated service {update.service_instance.service_id}")
+            logger.info(f"Updated service {update.service_instance.service_id}")
         except Exception as e:
-            logging.error(f"An error occurred while updating the service: {e}")
+            logger.error(f"An error occurred while updating the service: {e}")
             await websocket.close()
 
     @_handle.register
     async def _handle_register_target(self, register_target: RegisterTarget, websocket: WebSocket) -> None:
         """Handle the register target message."""
         self.registry.add_target(register_target.target_instance, websocket)
-        logging.info(f"Registered target service {register_target.target_instance.target_id}")
+        logger.info(f"Registered target service {register_target.target_instance.target_id}")
 
     def start(self):
         self._thread.start()
@@ -186,14 +189,20 @@ class Api:
     def registry(self) -> ServiceRegistry:
         return self.websocket_server.registry
 
+    def _log_call(self, func_name, kwargs: Optional[Dict] = None):
+        kwargs = kwargs if kwargs is not None else {}
+        logger.info(f"Called '{func_name}' with args: {kwargs}")
+
     async def get_health(self):
+        self._log_call(self.get_health.__name__)
         return "Healthy"
 
     async def get_services(self):
+        self._log_call(self.get_services.__name__)
         return [service.json for service in self.registry.get_services()], 200
 
     async def get_service(self, service_id: str):
-        logging.info(f"Called 'get_service' with ID: {service_id}")
+        self._log_call(self.get_service.__name__, dict(service_id=service_id))
         service_id = ServiceId(service_id)
         result = self.registry.get_service(service_id)
         if result is None:
@@ -201,10 +210,11 @@ class Api:
         return result.json, 200
 
     async def get_targets(self):
+        self._log_call(self.get_targets.__name__)
         return [target.json for target in self.registry.get_targets()], 200
 
     async def get_target(self, target_id: str):
-        logging.info(f"Called 'get_target' with ID: {target_id}")
+        self._log_call(self.get_target.__name__, dict(target_id=target_id))
         target_id = TargetId(target_id)
         result = self.registry.get_target(target_id)
         if result is None:
@@ -212,6 +222,7 @@ class Api:
         return target_to_json(target_id, result), 200
 
     async def get_target_request(self, target_id: str):
+        self._log_call(self.get_target_request.__name__, dict(target_id=target_id))
         target_id = TargetId(target_id)
         result = self.registry.get_target(target_id)
         if result is None:
@@ -227,6 +238,7 @@ class Api:
         return cast(ResponseTargetAction, response).action
 
     async def execute_service_action(self, service_id: str, body: str):
+        self._log_call(self.execute_service_action.__name__, dict(service_id=service_id, body=body))
         action_name = body
         service_id = ServiceId(service_id)
         service = self.registry.get_service(service_id)

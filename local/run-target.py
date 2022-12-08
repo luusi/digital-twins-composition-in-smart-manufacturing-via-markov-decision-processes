@@ -1,49 +1,56 @@
 #!/usr/bin/env python3
 import asyncio
 import json
-import logging
+from asyncio import CancelledError
 from functools import singledispatchmethod
 from pathlib import Path
 
 import click
 import websockets
 from websocket import WebSocket
+from websockets.exceptions import ConnectionClosedOK
 
-from digital_twins.Devices.utils import target_from_json
 from digital_twins.target_simulator import TargetSimulator
 from local.things_api.client_wrapper import WebSocketWrapper
-from local.things_api.data import ServiceType, TargetInstance
-from local.things_api.helpers import TargetId, setup_logger
-from local.things_api.messages import to_json, RegisterTarget, from_json, Message, RequestTargetAction, \
+from local.things_api.data import TargetInstance
+from local.things_api.helpers import setup_logger
+from local.things_api.messages import RegisterTarget, Message, RequestTargetAction, \
     ResponseTargetAction
-from stochastic_service_composition.target import Target
 
 
 class TargetDevice:
 
-    def __init__(self, target_instance: TargetInstance):
+    def __init__(self, target_instance: TargetInstance, host: str = "localhost", port: int = 8765):
         self.target_instance = target_instance
         self._simulator = TargetSimulator(self.target_instance.target_spec)
 
         self.logger = setup_logger(self.target_instance.target_id)
+        self.host = host
+        self.port = port
 
     @classmethod
-    def from_spec(cls, spec_path: Path) -> "TargetDevice":
-        logging.info(f"Loading service spec from {spec_path}...")
+    def from_spec(cls, spec_path: Path, **kwargs) -> "TargetDevice":
         data = json.loads(spec_path.read_text())
         target_instance = TargetInstance.from_json(data)
-        return TargetDevice(target_instance)
+        return TargetDevice(target_instance, **kwargs)
 
     async def async_main(self):
-        async with websockets.connect("ws://localhost:8765") as websocket:
+        self.logger.info(f"Starting target '{self.target_instance.target_id}'...")
+        async with websockets.connect(f"ws://{self.host}:{self.port}") as websocket:
             # register
-            logging.info("Registering to server...")
+            self.logger.info("Registering to server...")
             message = RegisterTarget(self.target_instance)
             await WebSocketWrapper.send_message(websocket, message)
             while True:
-                logging.info("Waiting for messages from the server...")
-                message = await WebSocketWrapper.recv_message(websocket)
-                await self._handle(message, websocket)
+                try:
+                    self.logger.info("Waiting for messages from the server...")
+                    message = await WebSocketWrapper.recv_message(websocket)
+                    self.logger.info("Received message from server, handling it...")
+                    await self._handle(message, websocket)
+                except (KeyboardInterrupt, ConnectionClosedOK, CancelledError):
+                    self.logger.info("Close connection")
+                    await websocket.close()
+                    break
 
     @singledispatchmethod
     async def _handle(self, message: Message, websocket: WebSocket):
@@ -64,12 +71,21 @@ class TargetDevice:
 
 @click.command()
 @click.option("--spec", type=click.Path(exists=True, dir_okay=False))
-def main(spec):
+@click.option("--host", type=str, default="localhost")
+@click.option("--port", type=int, default=8765)
+def main(spec, host, port):
     """Start target."""
-    target_device = TargetDevice.from_spec(Path(spec))
-    asyncio.run(target_device.async_main())
+    target_device = TargetDevice.from_spec(Path(spec), host=host, port=port)
+    loop = asyncio.get_event_loop()
+    task = loop.create_task(target_device.async_main())
+    try:
+        loop.run_until_complete(task)
+    except KeyboardInterrupt:
+        task.cancel()
+        loop.run_until_complete(task)
+    finally:
+        loop.close()
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     main()
