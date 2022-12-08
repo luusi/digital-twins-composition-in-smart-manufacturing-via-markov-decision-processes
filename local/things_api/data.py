@@ -1,21 +1,21 @@
 import dataclasses
-from copy import deepcopy
 from enum import Enum
 from typing import Any, Dict
 
-from local.things_api.helpers import ServiceId
+from local.things_api.helpers import ServiceId, TargetId
 from stochastic_service_composition.services import Service, build_service_from_transitions
-from stochastic_service_composition.types import MDPDynamics
+from stochastic_service_composition.target import Target
+from stochastic_service_composition.types import MDPDynamics, TargetDynamics
 
 
 class ServiceType(Enum):
     SERVICE = "service"
+    TARGET = "target"
 
 
 @dataclasses.dataclass(frozen=True)
 class ServiceInstance:
     service_id: ServiceId
-    service_type: ServiceType
     service_spec: Service
     current_state: Any
     transition_function: MDPDynamics
@@ -25,6 +25,7 @@ class ServiceInstance:
         """Get the service instance from JSON format."""
         service_id = ServiceId(obj["id"])
         service_type = ServiceType(obj["attributes"]["type"])
+        assert service_type == ServiceType.SERVICE
 
         current_transition_function = obj["features"]["transition_function"]
         current_state = obj["features"]["current_state"]
@@ -35,7 +36,6 @@ class ServiceInstance:
         service = build_service_from_transitions(transitions, initial_state, final_states)
         return ServiceInstance(
             service_id,
-            service_type,
             service,
             current_state,
             current_transition_function
@@ -52,9 +52,35 @@ class ServiceInstance:
             current_state=self.current_state
         )
         result["attributes"] = dict(
-            type=self.service_type.SERVICE.value,
+            type=ServiceType.SERVICE.value,
             transitions=self.transition_function,
             initial_state=self.service_spec.initial_state,
             final_states=sorted(self.service_spec.final_states)
         )
         return result
+
+
+def _get_target_dynamics(target: Target) -> TargetDynamics:
+    result: TargetDynamics = {}
+
+    for state, trans_by_action in target.transition_function.items():
+        result[state] = {}
+        for action, next_state in trans_by_action.items():
+            prob = target.policy[state][action]
+            reward = target.reward[state][action]
+            result[state][action] = (next_state, prob, reward)
+    return result
+
+
+def target_to_json(target_id: TargetId, target: Target) -> Dict:
+    result = dict()
+
+    result["id"] = str(target_id)
+    result["attributes"] = dict(
+        type=ServiceType.TARGET.value,
+        transitions=_get_target_dynamics(target),
+        initial_state=target.initial_state,
+        final_states=sorted(target.final_states)
+    )
+
+    return result

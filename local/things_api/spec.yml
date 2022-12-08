@@ -32,7 +32,7 @@ paths:
     get:
       tags: [Services]
       operationId: app.server.api.get_service
-      summary: Get a single pet
+      summary: Get a single service
       parameters:
         - $ref: '#/components/parameters/serviceId'
       responses:
@@ -44,6 +44,37 @@ paths:
                 $ref: '#/components/schemas/Service'
         404:
           description: Service does not exist
+  /targets:
+    get:
+      tags: [ Services ]
+      operationId: app.server.api.get_targets
+      summary: Get all target services
+      responses:
+        200:
+          description: Return target services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Target'
+  "/targets/{target_id}":
+    get:
+      tags: [Services]
+      operationId: app.server.api.get_target
+      summary: Get a single target service
+      parameters:
+        - $ref: '#/components/parameters/targetId'
+      responses:
+        200:
+          description: Return target service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Target'
+        404:
+          description: Target service does not exist
+
 
 components:
   parameters:
@@ -54,9 +85,19 @@ components:
         $ref: '#/components/schemas/serviceId'
       required: true
       description: Service ID
+    targetId:
+      in: path
+      name: target_id
+      schema:
+        $ref: '#/components/schemas/targetId'
+      required: true
+      description: Target ID
 
   schemas:
     serviceId:
+      type: string
+      pattern: "^[A-Za-z0-9-_]+$"
+    targetId:
       type: string
       pattern: "^[A-Za-z0-9-_]+$"
     stateName:
@@ -138,3 +179,47 @@ components:
               $ref: "#/components/schemas/stateName"
             transition_function:
               $ref: "#/components/schemas/TransitionFunction"
+    TargetTransition:
+      type: array
+      description: A triple (state, prob, reward) (requires external validation)
+      minItems: 3
+      maxItems: 3
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/stateName'
+          - $ref: '#/components/schemas/probability'
+          - $ref: '#/components/schemas/reward'
+    TargetTransitionsByAction:
+      type: object
+      description: a mapping from action to transitions and rewards
+      additionalProperties:
+        $ref: "#/components/schemas/TargetTransition"
+    TargetTransitionFunction:
+      type: object
+      description: a mapping from states to a dictionary of transitions by actions
+      additionalProperties:
+        $ref: "#/components/schemas/TargetTransitionsByAction"
+    Target:
+      type: object
+      required:
+        - id
+        - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/serviceId'
+        attributes:
+          type: object
+          required:
+            - type
+            - transitions
+            - initial_state
+            - final_states
+          properties:
+            type:
+              $ref: "#/components/schemas/deviceType"
+            transitions:
+               $ref: "#/components/schemas/TargetTransitionFunction"
+            initial_state:
+              $ref: "#/components/schemas/stateName"
+            final_states:
+              $ref: "#/components/schemas/StatesSet"
