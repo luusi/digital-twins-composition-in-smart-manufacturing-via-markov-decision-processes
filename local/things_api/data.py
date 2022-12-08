@@ -14,7 +14,7 @@ class ServiceType(Enum):
     TARGET = "target"
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass
 class ServiceInstance:
     service_id: ServiceId
     service_spec: Service
@@ -61,7 +61,7 @@ class ServiceInstance:
         return result
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass
 class TargetInstance:
     target_id: TargetId
     target_spec: Target

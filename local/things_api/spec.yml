@@ -90,7 +90,25 @@ paths:
                 $ref: '#/components/schemas/actionName'
         404:
           description: Target service does not exist
-
+  "/execute-service-action/{service_id}":
+    post:
+      tags: [Services]
+      operationId: app.server.api.execute_service_action
+      summary: Request a service to execute an action
+      parameters:
+        - $ref: '#/components/parameters/serviceId'
+      requestBody:
+        description: The action name
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/actionName'
+      responses:
+        200:
+          description: Return an ack to the caller
+        404:
+          description: Service does not exist
 
 
 components:

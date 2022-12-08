@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import json
 import logging
 from typing import List
 
@@ -8,21 +9,11 @@ from mdp_dp_rl.processes.mdp import MDP
 from digital_twins.target_simulator import TargetSimulator
 from local.things_api.client_wrapper import ClientWrapper
 from local.things_api.data import ServiceInstance, TargetInstance
+from local.things_api.helpers import setup_logger
 from stochastic_service_composition.composition import composition_mdp
 
 
-def setup_logger():
-    """Set up the logger."""
-    logger = logging.getLogger("digital_twins")
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(fmt="[%(asctime)s][%(name)s][%(levelname)s] %(message)s")
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    return logger
-
-
-logger = setup_logger()
+logger = setup_logger("orchestrator")
 
 parser = argparse.ArgumentParser("main")
 parser.add_argument("--host", type=str, default="localhost", help="IP address of the HTTP IoT service.")
@@ -70,8 +61,27 @@ async def main(host: str, port: int) -> None:
         target_simulator.update_state(target_action)
         logger.info(f"Iteration: {iteration}, target action: {target_action}")
         current_state = (tuple(system_state), current_target_state, target_action)
-        print(current_state)
+        logger.info(f"Current state: {current_state}")
 
+        orchestrator_choice = orchestrator_policy.get_action_for_state(current_state)
+        if orchestrator_choice == "undefined":
+            logger.error(f"Execution failed: no service can execute {target_action} in system state {system_state}")
+            break
+        # send_action_to_service
+        service_index = orchestrator_choice
+        service_id = services[service_index].service_id
+        logger.info(f"Sending message to thing: {service_id}, {target_action}")
+        await client.execute_service_action(service_id, target_action)
+        logger.info(f"Action has been executed")
+        new_service_instance = await client.get_service(service_id)
+        services[service_index] = new_service_instance
+        system_state[service_index] = new_service_instance.current_state
+        logger.info(f"Next service state: {new_service_instance.current_state}")
+        old_transition_function = services[service_index].transition_function
+        if old_transition_function != new_service_instance.transition_function:
+            logger.info(f"Transition function has changed!\nOld: {old_transition_function}\nNew: {new_service_instance.transition_function}")
+
+        logger.info("Sleeping one second...")
         await asyncio.sleep(1.0)
         iteration += 1
 

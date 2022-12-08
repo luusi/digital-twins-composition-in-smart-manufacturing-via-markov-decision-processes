@@ -13,21 +13,10 @@ from digital_twins.Devices.utils import target_from_json
 from digital_twins.target_simulator import TargetSimulator
 from local.things_api.client_wrapper import WebSocketWrapper
 from local.things_api.data import ServiceType, TargetInstance
-from local.things_api.helpers import TargetId
+from local.things_api.helpers import TargetId, setup_logger
 from local.things_api.messages import to_json, RegisterTarget, from_json, Message, RequestTargetAction, \
     ResponseTargetAction
 from stochastic_service_composition.target import Target
-
-
-def setup_logger():
-    """Set up the logger."""
-    logger = logging.getLogger("digital_twins")
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(fmt="[%(asctime)s][%(name)s][%(levelname)s] %(message)s")
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    return logger
 
 
 class TargetDevice:
@@ -36,7 +25,7 @@ class TargetDevice:
         self.target_instance = target_instance
         self._simulator = TargetSimulator(self.target_instance.target_spec)
 
-        self.logger = setup_logger()
+        self.logger = setup_logger(self.target_instance.target_id)
 
     @classmethod
     def from_spec(cls, spec_path: Path) -> "TargetDevice":
@@ -50,9 +39,7 @@ class TargetDevice:
             # register
             logging.info("Registering to server...")
             message = RegisterTarget(self.target_instance)
-            json_message = to_json(message)
-            await websocket.send(json.dumps(json_message))
-
+            await WebSocketWrapper.send_message(websocket, message)
             while True:
                 logging.info("Waiting for messages from the server...")
                 message = await WebSocketWrapper.recv_message(websocket)

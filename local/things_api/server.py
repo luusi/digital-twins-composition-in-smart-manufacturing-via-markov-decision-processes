@@ -5,7 +5,7 @@ import signal
 from asyncio import AbstractEventLoop
 from functools import singledispatchmethod
 from threading import Thread
-from typing import Dict, Optional, List, Tuple, cast
+from typing import Dict, Optional, List, cast
 
 import websockets
 from websocket import WebSocket
@@ -15,7 +15,7 @@ from local.things_api.client_wrapper import WebSocketWrapper
 from local.things_api.data import ServiceInstance, target_to_json, TargetInstance
 from local.things_api.helpers import ServiceId, TargetId
 from local.things_api.messages import from_json, Message, Register, Update, RegisterTarget, RequestTargetAction, \
-    to_json, ResponseTargetAction
+    ResponseTargetAction, ExecuteServiceAction, ExecutionResult
 from stochastic_service_composition.target import Target
 
 logging.basicConfig(level=logging.INFO)
@@ -225,6 +225,25 @@ class Api:
         assert response.TYPE == ResponseTargetAction.TYPE
 
         return cast(ResponseTargetAction, response).action
+
+    async def execute_service_action(self, service_id: str, body: str):
+        action_name = body
+        service_id = ServiceId(service_id)
+        service = self.registry.get_service(service_id)
+        if service is None:
+            return f'Service with id {service_id} not found', 404
+        websocket = self.registry.sockets_by_service_id[service_id]
+        request = ExecuteServiceAction(action_name)
+        await WebSocketWrapper.send_message(websocket, request)
+
+        # waiting reply from service
+        response = await WebSocketWrapper.recv_message(websocket)
+        assert response.TYPE == ExecutionResult.TYPE
+
+        execution_result = cast(ExecutionResult, response)
+        service.current_state = execution_result.new_state
+        service.transition_function = execution_result.transition_function
+        return "", 200
 
 
 class Server:
