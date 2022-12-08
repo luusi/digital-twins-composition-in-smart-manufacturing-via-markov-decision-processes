@@ -16,7 +16,7 @@ class Register(Message):
         self.service_instance = service_instance
 
 
-def from_json(obj: Dict, sender: str) -> Message:
+def from_json(obj: Dict) -> Message:
 
     message_type = obj["type"]
     payload = obj["payload"]

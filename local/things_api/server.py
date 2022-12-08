@@ -85,7 +85,7 @@ class WebsocketServer:
             while True:
                 raw_message = await websocket.recv()
                 message_json = json.loads(raw_message)
-                message = from_json(message_json, websocket)
+                message = from_json(message_json)
                 await self._handle(message, websocket)
         except ConnectionClosedOK:
             service_id = self.registry.id_by_sockets[websocket]
