@@ -1,8 +1,12 @@
 import argparse
 import asyncio
 import logging
+from typing import List, Tuple
 
 from local.things_api.client_wrapper import ClientWrapper
+from local.things_api.data import ServiceInstance
+from local.things_api.helpers import TargetId
+from stochastic_service_composition.target import Target
 
 
 def setup_logger():
@@ -27,12 +31,16 @@ async def main(host: str, port: int) -> None:
     client = ClientWrapper(host, port)
 
     # check health
-    result = await client.get_health()
-    assert result.status_code == 200
+    response = await client.get_health()
+    assert response.status_code == 200
 
     # get all services
-    result = await client.get_services()
-    print(result)
+    all_services: List[ServiceInstance] = await client.get_services()
+    logger.info(f"Got {len(all_services)} available services")
+
+    # get targets
+    all_targets: List[Tuple[TargetId, Target]] = await client.get_targets()
+    logger.info(f"Got {len(all_targets)} target services")
 
 
 if __name__ == "__main__":

@@ -63,7 +63,7 @@ class ServiceRegistry:
 
     def add_target(self, target_id: TargetId, target: Target, socket: WebSocket):
         if target_id in self.targets:
-            raise ValueError(f"already registered a service with id {target_id}")
+            raise ValueError(f"already registered a targert service with id {target_id}")
         self.targets[target_id] = target
         self.sockets_by_target_id[target_id] = socket
         self.target_id_by_sockets[socket] = target_id

@@ -110,6 +110,7 @@ components:
       type: string
       enum:
         - "service"
+        - "target"
     reward:
       type: number
     probability:

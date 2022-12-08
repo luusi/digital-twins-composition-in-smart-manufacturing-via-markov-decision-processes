@@ -4,6 +4,7 @@
 
 # remove previous output if any
 /bin/rm -rf things-api-client
+/bin/rm -rf local/things_api/client
 
 # generate new client
 openapi-python-client generate --path local/things_api/spec.yml
