@@ -17,6 +17,7 @@ setup(name='stochastic_service_composition',
             "requests",
             "connexion[swagger-ui]",
             "flask",
+            "aiohttp",
             "mdp_dp_rl @ git+https://github.com/luusi/mdp-dp-rl.git#egg=mdp_dp_rl"
       ]
       )

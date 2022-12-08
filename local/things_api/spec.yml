@@ -8,7 +8,7 @@ paths:
   /health:
     get:
       tags: [Health]
-      operationId: app.api.get_health
+      operationId: app.server.api.get_health
       summary: Health check
       responses:
         200:
@@ -16,7 +16,7 @@ paths:
   /services:
     get:
       tags: [ Services ]
-      operationId: app.api.get_services
+      operationId: app.server.api.get_services
       summary: Get all services
       responses:
         200:
@@ -31,7 +31,7 @@ paths:
   "/services/{service_id}":
     get:
       tags: [Services]
-      operationId: app.api.get_service
+      operationId: app.server.api.get_service
       summary: Get a single pet
       parameters:
         - $ref: '#/components/parameters/serviceId'
@@ -44,36 +44,6 @@ paths:
                 $ref: '#/components/schemas/Service'
         404:
           description: Service does not exist
-    put:
-      tags: [Services]
-      operationId: app.api.put_service
-      summary: Create or update a service
-      parameters:
-        - $ref: '#/components/parameters/serviceId'
-      requestBody:
-        description: Service
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Service'
-      responses:
-        200:
-          description: Service updated
-        201:
-          description: New service created
-    delete:
-      tags: [Services]
-      operationId: app.api.delete_service
-      summary: Remove a service
-      parameters:
-        - $ref: '#/components/parameters/serviceId'
-      responses:
-        204:
-          description: Service was deleted
-        404:
-          description: Service does not exist
-
 
 components:
   parameters:
