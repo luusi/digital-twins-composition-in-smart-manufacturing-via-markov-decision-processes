@@ -1,16 +1,19 @@
 """Wrapper class to auto-generated OpenAPI client functions."""
 import json
-from typing import List, Tuple
+from typing import List
 
-from digital_twins.Devices.utils import target_from_json
+from websocket import WebSocket
+
 from local.things_api.client import Client
 from local.things_api.client.api.health.app_server_api_get_health import asyncio_detailed as get_health
 from local.things_api.client.api.services.app_server_api_get_services import asyncio_detailed as get_services
+from local.things_api.client.api.services.app_server_api_get_target_request import \
+    asyncio_detailed as get_target_request
 from local.things_api.client.api.services.app_server_api_get_targets import asyncio_detailed as get_targets
-from local.things_api.client.models import Service, Target as TargetSpec
-from local.things_api.data import ServiceInstance
+from local.things_api.client.models import Service
+from local.things_api.data import ServiceInstance, TargetInstance
 from local.things_api.helpers import TargetId
-from stochastic_service_composition.target import Target
+from local.things_api.messages import Message, from_json, to_json
 
 TIMEOUT = 10.0
 
@@ -42,9 +45,29 @@ class ClientWrapper:
         to_our_model = [ServiceInstance.from_json(service.to_dict()) for service in result]
         return to_our_model
 
-    async def get_targets(self) -> List[Tuple[TargetId, Target]]:
+    async def get_targets(self) -> List[TargetInstance]:
         """Get all the services."""
         response = await get_targets(client=self._client)
         result = json.loads(response.content)
-        to_our_model = [(target["id"], target_from_json(target)) for target in result]
+        to_our_model = [TargetInstance.from_json(target) for target in result]
         return to_our_model
+
+    async def get_target_request(self, target_id: TargetId) -> str:
+        """Get next target action."""
+        response = await get_target_request(str(target_id), client=self._client)
+        return response.parsed
+
+
+class WebSocketWrapper:
+
+    @classmethod
+    async def send_message(cls, websocket: WebSocket, message: Message):
+        json_message = to_json(message)
+        raw_message = json.dumps(json_message)
+        await websocket.send(raw_message)
+
+    @classmethod
+    async def recv_message(cls, websocket: WebSocket) -> Message:
+        raw_message = await websocket.recv()
+        json_message = json.loads(raw_message)
+        return from_json(json_message)

@@ -74,6 +74,23 @@ paths:
                 $ref: '#/components/schemas/Target'
         404:
           description: Target service does not exist
+  "/get-target-request/{target_id}":
+    post:
+      tags: [Services]
+      operationId: app.server.api.get_target_request
+      summary: Get a target request
+      parameters:
+        - $ref: '#/components/parameters/targetId'
+      responses:
+        200:
+          description: Return target request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/actionName'
+        404:
+          description: Target service does not exist
+
 
 
 components:

@@ -2,6 +2,7 @@ import dataclasses
 from enum import Enum
 from typing import Any, Dict
 
+from digital_twins.Devices.utils import target_from_json
 from local.things_api.helpers import ServiceId, TargetId
 from stochastic_service_composition.services import Service, build_service_from_transitions
 from stochastic_service_composition.target import Target
@@ -56,6 +57,46 @@ class ServiceInstance:
             transitions=self.transition_function,
             initial_state=self.service_spec.initial_state,
             final_states=sorted(self.service_spec.final_states)
+        )
+        return result
+
+
+@dataclasses.dataclass(frozen=True)
+class TargetInstance:
+    target_id: TargetId
+    target_spec: Target
+    current_action: Any
+
+    @classmethod
+    def from_json(cls, obj: Dict) -> "TargetInstance":
+        """Get the service instance from JSON format."""
+        service_id = TargetId(obj["id"])
+        service_type = ServiceType(obj["attributes"]["type"])
+        assert service_type == ServiceType.TARGET
+
+        current_state = obj["features"]["current_action"]
+
+        target_spec = target_from_json(obj)
+        return TargetInstance(
+            service_id,
+            target_spec,
+            current_state,
+        )
+
+    @property
+    def json(self) -> Dict:
+        """Get the service instance in JSON format."""
+        result = dict()
+
+        result["id"] = str(self.target_id)
+        result["attributes"] = dict(
+            type=ServiceType.TARGET.value,
+            transitions=_get_target_dynamics(self.target_spec),
+            initial_state=self.target_spec.initial_state,
+            final_states=sorted(self.target_spec.final_states)
+        )
+        result["features"] = dict(
+            current_action=self.current_action
         )
         return result
 

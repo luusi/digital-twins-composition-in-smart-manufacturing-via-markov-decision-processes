@@ -2,7 +2,7 @@ from functools import singledispatch
 from typing import Dict
 
 from digital_twins.Devices.utils import target_from_json
-from local.things_api.data import ServiceInstance, target_to_json
+from local.things_api.data import ServiceInstance, target_to_json, TargetInstance
 from local.things_api.helpers import TargetId
 from stochastic_service_composition.target import Target
 
@@ -32,9 +32,21 @@ class RegisterTarget(Message):
 
     TYPE = "register_target"
 
-    def __init__(self, target_id: TargetId, target: Target) -> None:
-        self.target_id = target_id
-        self.target = target
+    def __init__(self, target_instance: TargetInstance) -> None:
+        self.target_instance = target_instance
+
+
+class RequestTargetAction(Message):
+
+    TYPE = "request_target_action"
+
+
+class ResponseTargetAction(Message):
+
+    TYPE = "response_target_action"
+
+    def __init__(self, action: str) -> None:
+        self.action = action
 
 
 def from_json(obj: Dict) -> Message:
@@ -50,9 +62,12 @@ def from_json(obj: Dict) -> Message:
             service_instance = ServiceInstance.from_json(payload)
             return Update(service_instance)
         case RegisterTarget.TYPE:
-            target_id = TargetId(payload["id"])
-            target = target_from_json(payload)
-            return RegisterTarget(target_id, target)
+            target_instance = TargetInstance.from_json(payload)
+            return RegisterTarget(target_instance)
+        case RequestTargetAction.TYPE:
+            return RequestTargetAction()
+        case ResponseTargetAction.TYPE:
+            return ResponseTargetAction(payload["action"])
 
     raise ValueError(f"message type {message_type} not expected")
 
@@ -80,8 +95,23 @@ def update_to_json(message: Update):
 
 @to_json.register
 def register_target_to_json(message: RegisterTarget):
-    target_payload = target_to_json(message.target_id, message.target)
     return dict(
         type=message.TYPE,
-        payload=target_payload
+        payload=message.target_instance.json
+    )
+
+
+@to_json.register
+def request_target_action_to_json(message: RequestTargetAction):
+    return dict(
+        type=message.TYPE,
+        payload={}
+    )
+
+
+@to_json.register
+def response_target_action_to_json(message: ResponseTargetAction):
+    return dict(
+        type=message.TYPE,
+        payload=dict(action=message.action)
     )

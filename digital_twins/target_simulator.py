@@ -25,3 +25,10 @@ class TargetSimulator:
         transitions_from_state = self.target.transition_function[self._current_state]
         next_state = transitions_from_state[action]
         self._current_state = next_state
+
+    def sample_action(self) -> str:
+        """Sample the next action and update the state."""
+        action_to_probability = self.target.policy[self._current_state]
+        actions, probabilities = zip(*action_to_probability.items())
+        sampled_action = random.choices(actions, probabilities)[0]
+        return sampled_action

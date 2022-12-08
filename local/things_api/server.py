@@ -5,15 +5,17 @@ import signal
 from asyncio import AbstractEventLoop
 from functools import singledispatchmethod
 from threading import Thread
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple, cast
 
 import websockets
 from websocket import WebSocket
 from websockets.exceptions import ConnectionClosedOK
 
-from local.things_api.data import ServiceInstance, target_to_json
+from local.things_api.client_wrapper import WebSocketWrapper
+from local.things_api.data import ServiceInstance, target_to_json, TargetInstance
 from local.things_api.helpers import ServiceId, TargetId
-from local.things_api.messages import from_json, Message, Register, Update, RegisterTarget
+from local.things_api.messages import from_json, Message, Register, Update, RegisterTarget, RequestTargetAction, \
+    to_json, ResponseTargetAction
 from stochastic_service_composition.target import Target
 
 logging.basicConfig(level=logging.INFO)
@@ -26,23 +28,26 @@ class ServiceRegistry:
         self.sockets_by_service_id: Dict[ServiceId, WebSocket] = {}
         self.service_id_by_sockets: Dict[WebSocket, ServiceId] = {}
 
-        self.targets: Dict[TargetId, Target] = {}
+        self.targets: Dict[TargetId, TargetInstance] = {}
         self.sockets_by_target_id: Dict[TargetId, WebSocket] = {}
         self.target_id_by_sockets: Dict[WebSocket, TargetId] = {}
 
     def has_service(self, service_id: ServiceId) -> bool:
         return service_id in self.services
 
-    def get_services(self) -> List[ServiceInstance]:
-        return [service for service in self.services.values()]
+    def has_target(self, target_id: TargetId) -> bool:
+        return target_id in self.targets
 
-    def get_service(self, service_id: ServiceId) -> ServiceInstance:
+    def get_services(self) -> List[ServiceInstance]:
+        return list(self.services.values())
+
+    def get_service(self, service_id: ServiceId) -> Optional[ServiceInstance]:
         return self.services.get(service_id, None)
 
-    def get_targets(self) -> List[Tuple[TargetId, Target]]:
-        return list(self.targets.items())
+    def get_targets(self) -> List[TargetInstance]:
+        return list(self.targets.values())
 
-    def get_target(self, target_id: TargetId) -> Target:
+    def get_target(self, target_id: TargetId) -> Optional[Target]:
         return self.targets.get(target_id, None)
 
     def add_service(self, service_instance: ServiceInstance, socket: WebSocket):
@@ -61,12 +66,21 @@ class ServiceRegistry:
         assert self.has_service(service_id)
         self.services[service_id] = service_instance
 
-    def add_target(self, target_id: TargetId, target: Target, socket: WebSocket):
-        if target_id in self.targets:
-            raise ValueError(f"already registered a targert service with id {target_id}")
-        self.targets[target_id] = target
-        self.sockets_by_target_id[target_id] = socket
-        self.target_id_by_sockets[socket] = target_id
+    def add_target(self, target_instance: TargetInstance, socket: WebSocket):
+        if target_instance.target_id in self.targets:
+            raise ValueError(f"already registered a targert service with id {target_instance.target_id}")
+        self.targets[target_instance.target_id] = target_instance
+        self.sockets_by_target_id[target_instance.target_id] = socket
+        self.target_id_by_sockets[socket] = target_instance.target_id
+
+    def update_target(self, target_id: TargetId, target_instance: TargetInstance) -> None:
+        assert self.has_target(target_id)
+        self.targets[target_id] = target_instance
+
+    def remove_target(self, target_id: TargetId):
+        self.targets.pop(target_id)
+        socket = self.sockets_by_target_id.pop(target_id)
+        self.target_id_by_sockets.pop(socket)
 
 
 class WebsocketServer:
@@ -99,22 +113,33 @@ class WebsocketServer:
 
     async def request_handler(self, websocket):
         try:
+            # handle registration
+            raw_message = await websocket.recv()
+            message_json = json.loads(raw_message)
+            message = from_json(message_json)
+            assert isinstance(message, (Register, RegisterTarget))
+            await self._handle(message, websocket)
+            # don't close connection - communcation is handled elsewhere
             while True:
-                raw_message = await websocket.recv()
-                message_json = json.loads(raw_message)
-                message = from_json(message_json)
-                await self._handle(message, websocket)
+                await asyncio.Future()
         except ConnectionClosedOK:
             if websocket in self.registry.service_id_by_sockets:
                 # service registered, removing it
                 service_id = self.registry.service_id_by_sockets[websocket]
                 logging.info(f"Service {service_id} disconnected, removing it...")
                 self.registry.remove_service(service_id)
+            if websocket in self.registry.target_id_by_sockets:
+                # target registered, removing it
+                target_id = self.registry.target_id_by_sockets[websocket]
+                logging.info(f"Service {target_id} disconnected, removing it...")
+                self.registry.remove_target(target_id)
             else:
                 # it was not registered yet
                 logging.info(f"closing connection with {websocket.remote_address}")
-        except Exception:
-            raise
+                await websocket.close()
+        except Exception as e:
+            logging.error(f"an error occurred: {e}")
+            await websocket.close()
 
     @singledispatchmethod
     async def _handle(self, message: Message, websocket: WebSocket) -> None:
@@ -139,8 +164,8 @@ class WebsocketServer:
     @_handle.register
     async def _handle_register_target(self, register_target: RegisterTarget, websocket: WebSocket) -> None:
         """Handle the register target message."""
-        self.registry.add_target(register_target.target_id, register_target.target, websocket)
-        logging.info(f"Registered target service {register_target.target_id}")
+        self.registry.add_target(register_target.target_instance, websocket)
+        logging.info(f"Registered target service {register_target.target_instance.target_id}")
 
     def start(self):
         self._thread.start()
@@ -176,15 +201,30 @@ class Api:
         return result.json, 200
 
     async def get_targets(self):
-        return [target_to_json(target_id, target) for target_id, target in self.registry.get_targets()], 200
+        return [target.json for target in self.registry.get_targets()], 200
 
     async def get_target(self, target_id: str):
         logging.info(f"Called 'get_target' with ID: {target_id}")
         target_id = TargetId(target_id)
         result = self.registry.get_target(target_id)
         if result is None:
-            return f'Service with id {target_id} not found', 404
+            return f'Target service with id {target_id} not found', 404
         return target_to_json(target_id, result), 200
+
+    async def get_target_request(self, target_id: str):
+        target_id = TargetId(target_id)
+        result = self.registry.get_target(target_id)
+        if result is None:
+            return f'Target service with id {target_id} not found', 404
+        websocket = self.registry.sockets_by_target_id[target_id]
+        request = RequestTargetAction()
+        await WebSocketWrapper.send_message(websocket, request)
+
+        # waiting reply from target
+        response = await WebSocketWrapper.recv_message(websocket)
+        assert response.TYPE == ResponseTargetAction.TYPE
+
+        return cast(ResponseTargetAction, response).action
 
 
 class Server:
