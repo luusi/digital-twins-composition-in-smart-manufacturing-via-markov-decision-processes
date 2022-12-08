@@ -109,7 +109,16 @@ paths:
           description: Return an ack to the caller
         404:
           description: Service does not exist
-
+  "/do-maintenance":
+    post:
+      tags: [ Services ]
+      operationId: app.server.api.do_maintenance
+      summary: Do maintenance of all services
+      responses:
+        200:
+          description: Return an ack to the caller
+        404:
+          description: Service does not exist
 
 components:
   parameters:

@@ -67,6 +67,11 @@ class ExecutionResult(Message):
         self.transition_function = transition_function
 
 
+class DoMaintenance(Message):
+
+    TYPE = "do_maintenance"
+
+
 def from_json(obj: Dict) -> Message:
 
     message_type = obj["type"]
@@ -90,6 +95,8 @@ def from_json(obj: Dict) -> Message:
             return ExecuteServiceAction(payload["action"])
         case ExecutionResult.TYPE:
             return ExecutionResult(payload["state"], payload["transition_function"])
+        case DoMaintenance.TYPE:
+            return DoMaintenance()
 
     raise ValueError(f"message type {message_type} not expected")
 
@@ -155,4 +162,12 @@ def execute_ack_to_json(message: ExecutionResult):
             state=message.new_state,
             transition_function=message.transition_function
         )
+    )
+
+
+@to_json.register
+def do_maintenance_to_json(message: DoMaintenance):
+    return dict(
+        type=message.TYPE,
+        payload=dict()
     )

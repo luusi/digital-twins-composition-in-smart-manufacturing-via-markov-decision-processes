@@ -45,7 +45,7 @@ async def main(host: str, port: int) -> None:
     iteration = 0
     while True:
 
-        mdp: MDP = composition_mdp(target.target_spec, *[service.service_spec for service in services])
+        mdp: MDP = composition_mdp(target.target_spec, *[service.current_service_spec for service in services])
         orchestrator_policy = mdp.get_optimal_policy()
         # detect when policy changes
         if old_policy is None:
@@ -74,12 +74,26 @@ async def main(host: str, port: int) -> None:
         await client.execute_service_action(service_id, target_action)
         logger.info(f"Action has been executed")
         new_service_instance = await client.get_service(service_id)
+        if services[service_index].transition_function != new_service_instance.transition_function:
+            logger.info(f"Transition function for service {new_service_instance.service_id} has changed! Old: {services[service_index].transition_function}, New: {new_service_instance.transition_function}")
         services[service_index] = new_service_instance
         system_state[service_index] = new_service_instance.current_state
         logger.info(f"Next service state: {new_service_instance.current_state}")
         old_transition_function = services[service_index].transition_function
         if old_transition_function != new_service_instance.transition_function:
             logger.info(f"Transition function has changed!\nOld: {old_transition_function}\nNew: {new_service_instance.transition_function}")
+
+        # execute the target loop ~four times before starting the maintenance
+        if iteration % (14 * 4) == 0:
+            logger.info("Sending msg for scheduled maintenance")
+            await client.do_maintenance()
+            # reset current state and transition function
+            for s in services:
+                logger.info(f"Restoring transition function for service '{s.service_id}'")
+                s.transition_function = s.service_spec.transition_function
+            # TODO: should reset it?
+            # # reset system state (but not target state)
+            # system_state = [service.initial_state for service in services]
 
         logger.info("Sleeping one second...")
         await asyncio.sleep(1.0)

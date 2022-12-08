@@ -15,7 +15,7 @@ from digital_twins.wrappers import initialize_wrapper
 from local.things_api.client_wrapper import WebSocketWrapper
 from local.things_api.data import ServiceInstance
 from local.things_api.helpers import setup_logger
-from local.things_api.messages import Register, Message, ExecuteServiceAction, ExecutionResult
+from local.things_api.messages import Register, Message, ExecuteServiceAction, ExecutionResult, DoMaintenance
 
 
 class ServiceDevice:
@@ -71,8 +71,17 @@ class ServiceDevice:
         self.logger.info(f"Previous state='{starting_state}', current state={new_state}")
         self.wrapper.update(starting_state, action)
         message = ExecutionResult(new_state, self.wrapper.transition_function)
+        self.logger.info(f"Updated transition function: {message.transition_function}")
         self.logger.info(f"Sending result to server")
         await WebSocketWrapper.send_message(websocket, message)
+
+    @_handle.register
+    async def _handle_maintenance(self, message: DoMaintenance, websocket: WebSocket):
+        self.logger.info(f"Processing message of type '{message.TYPE}'")
+        previous_transition_function = self.wrapper.transition_function
+        self.wrapper.reset()
+        current_transition_function = self.wrapper.transition_function
+        self.logger.info(f"Repaired service: previous tf={previous_transition_function}, new tf={current_transition_function}")
 
 
 @click.command()

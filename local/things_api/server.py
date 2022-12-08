@@ -15,7 +15,7 @@ from local.things_api.client_wrapper import WebSocketWrapper
 from local.things_api.data import ServiceInstance, target_to_json, TargetInstance
 from local.things_api.helpers import ServiceId, TargetId, setup_logger
 from local.things_api.messages import from_json, Message, Register, Update, RegisterTarget, RequestTargetAction, \
-    ResponseTargetAction, ExecuteServiceAction, ExecutionResult
+    ResponseTargetAction, ExecuteServiceAction, ExecutionResult, DoMaintenance
 from stochastic_service_composition.target import Target
 
 
@@ -256,6 +256,16 @@ class Api:
         service.current_state = execution_result.new_state
         service.transition_function = execution_result.transition_function
         return "", 200
+
+    async def do_maintenance(self):
+        self._log_call(self.do_maintenance.__name__)
+        for service_id, service in self.registry.services.items():
+            logger.info(f"sending maintenance request to service '{service_id}'")
+            message = DoMaintenance()
+            websocket = self.registry.sockets_by_service_id[service_id]
+            await WebSocketWrapper.send_message(websocket, message)
+            logger.info(f"resetting transition function for '{service_id}'")
+            service.transition_function = service.service_spec.transition_function
 
 
 class Server:

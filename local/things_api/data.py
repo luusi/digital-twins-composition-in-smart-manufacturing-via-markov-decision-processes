@@ -14,7 +14,7 @@ class ServiceType(Enum):
     TARGET = "target"
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(eq=True)
 class ServiceInstance:
     service_id: ServiceId
     service_spec: Service
@@ -59,6 +59,16 @@ class ServiceInstance:
             final_states=sorted(self.service_spec.final_states)
         )
         return result
+
+    @property
+    def current_service_spec(self):
+        return Service(
+            self.service_spec.states,
+            self.service_spec.actions,
+            self.service_spec.final_states,
+            self.service_spec.initial_state,
+            self.transition_function
+        )
 
 
 @dataclasses.dataclass
