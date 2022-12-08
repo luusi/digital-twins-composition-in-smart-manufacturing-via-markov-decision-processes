@@ -35,6 +35,11 @@ pip install -e .
   At [this page](https://www.graphviz.org/download/) you will
   find the releases for all the supported platform.
 
+- Generate Python client from OpenAPI v3.0 specification:
+```
+./scripts/generate-openapi-client.sh
+```
+
 ## Instructions to reproduce the experiments
 
 TODO
