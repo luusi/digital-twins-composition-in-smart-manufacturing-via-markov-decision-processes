@@ -84,16 +84,16 @@ async def main(host: str, port: int) -> None:
             logger.info(f"Transition function has changed!\nOld: {old_transition_function}\nNew: {new_service_instance.transition_function}")
 
         # execute the target loop ~four times before starting the maintenance
-        if iteration % (14 * 4) == 0:
+        if iteration != 0 and iteration % (14 * 4) == 0:
             logger.info("Sending msg for scheduled maintenance")
             await client.do_maintenance()
             # reset current state and transition function
             for s in services:
                 logger.info(f"Restoring transition function for service '{s.service_id}'")
                 s.transition_function = s.service_spec.transition_function
-            # TODO: should reset it?
-            # # reset system state (but not target state)
-            # system_state = [service.initial_state for service in services]
+                s.current_state = s.service_spec.initial_state
+            # reset system state (but not target state)
+            system_state = [service.service_spec.initial_state for service in services]
 
         logger.info("Sleeping one second...")
         await asyncio.sleep(1.0)
