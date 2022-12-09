@@ -54,7 +54,7 @@ class ServiceInstance:
         )
         result["attributes"] = dict(
             type=ServiceType.SERVICE.value,
-            transitions=self.transition_function,
+            transitions=self.service_spec.transition_function,
             initial_state=self.service_spec.initial_state,
             final_states=sorted(self.service_spec.final_states)
         )
