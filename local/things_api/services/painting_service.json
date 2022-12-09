@@ -39,10 +39,10 @@
       "available": {
         "painting": [
           {
-            "done": 0.65,
-            "broken": 0.35
+            "done": 0.95,
+            "broken": 0.05
           },
-          -7
+          -1
         ]
       },
       "broken": {
