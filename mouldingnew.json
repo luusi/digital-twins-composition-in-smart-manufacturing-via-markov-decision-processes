@@ -1,0 +1,67 @@
+{
+  "id": "moulding_service",
+  "attributes": {
+    "type": "service",
+    "transitions": {
+      "available": {
+        "moulding": [
+          {
+            "done": 0.95,
+            "broken": 0.05
+          },
+          -1
+        ]
+      },
+      "broken": {
+        "check_moulding": [
+          {
+            "available": 1
+          },
+          -10
+        ]
+      },
+      "done": {
+        "check_moulding": [
+          {
+            "available": 1
+          },
+          0
+        ]
+      }
+    },
+    "initial_state": "available",
+    "final_states": [
+      "available"
+    ]
+  },
+  "features": {
+    "transition_function": {
+      "available": {
+        "moulding": [
+          {
+            "done": 0.65,
+            "broken": 0.35
+          },
+          -7
+        ]
+      },
+      "broken": {
+        "check_moulding": [
+          {
+            "available": 1
+          },
+          -10
+        ]
+      },
+      "done": {
+        "check_moulding": [
+          {
+            "available": 1
+          },
+          0
+        ]
+      }
+    },
+    "current_state": "available"
+  }
+}

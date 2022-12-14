@@ -15,6 +15,10 @@ setup(name='stochastic_service_composition',
             "websockets",
             "paho-mqtt",
             "requests",
+            "connexion[swagger-ui]",
+            "flask",
+            "aiohttp",
+            "aiohttp_jinja2",
             "mdp_dp_rl @ git+https://github.com/luusi/mdp-dp-rl.git#egg=mdp_dp_rl"
       ]
       )

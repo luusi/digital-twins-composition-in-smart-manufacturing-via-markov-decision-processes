@@ -1,0 +1,270 @@
+openapi: '3.0.0'
+info:
+  title: Things API
+  version: "0.1.0"
+  description: A local service able to handle registration and dispatching of messages among connected devices.
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      operationId: app.server.api.get_health
+      summary: Health check
+      responses:
+        200:
+          description: Healthy
+  /services:
+    get:
+      tags: [ Services ]
+      operationId: app.server.api.get_services
+      summary: Get all services
+      responses:
+        200:
+          description: Return services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Service'
+
+  "/services/{service_id}":
+    get:
+      tags: [Services]
+      operationId: app.server.api.get_service
+      summary: Get a single service
+      parameters:
+        - $ref: '#/components/parameters/serviceId'
+      responses:
+        200:
+          description: Return service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+        404:
+          description: Service does not exist
+  /targets:
+    get:
+      tags: [ Services ]
+      operationId: app.server.api.get_targets
+      summary: Get all target services
+      responses:
+        200:
+          description: Return target services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Target'
+  "/targets/{target_id}":
+    get:
+      tags: [Services]
+      operationId: app.server.api.get_target
+      summary: Get a single target service
+      parameters:
+        - $ref: '#/components/parameters/targetId'
+      responses:
+        200:
+          description: Return target service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Target'
+        404:
+          description: Target service does not exist
+  "/get-target-request/{target_id}":
+    post:
+      tags: [Services]
+      operationId: app.server.api.get_target_request
+      summary: Get a target request
+      parameters:
+        - $ref: '#/components/parameters/targetId'
+      responses:
+        200:
+          description: Return target request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/actionName'
+        404:
+          description: Target service does not exist
+  "/execute-service-action/{service_id}":
+    post:
+      tags: [Services]
+      operationId: app.server.api.execute_service_action
+      summary: Request a service to execute an action
+      parameters:
+        - $ref: '#/components/parameters/serviceId'
+      requestBody:
+        description: The action name
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/actionName'
+      responses:
+        200:
+          description: Return an ack to the caller
+        404:
+          description: Service does not exist
+  "/do-maintenance":
+    post:
+      tags: [ Services ]
+      operationId: app.server.api.do_maintenance
+      summary: Do maintenance of all services
+      responses:
+        200:
+          description: Return an ack to the caller
+        404:
+          description: Service does not exist
+
+components:
+  parameters:
+    serviceId:
+      in: path
+      name: service_id
+      schema:
+        $ref: '#/components/schemas/serviceId'
+      required: true
+      description: Service ID
+    targetId:
+      in: path
+      name: target_id
+      schema:
+        $ref: '#/components/schemas/targetId'
+      required: true
+      description: Target ID
+
+  schemas:
+    serviceId:
+      type: string
+      pattern: "^[A-Za-z0-9-_]+$"
+    targetId:
+      type: string
+      pattern: "^[A-Za-z0-9-_]+$"
+    stateName:
+      type: string
+      pattern: "^[A-Za-z0-9-_]+$"
+    actionName:
+      type: string
+      pattern: "^[A-Za-z0-9-_]+$"
+    deviceType:
+      type: string
+      enum:
+        - "service"
+        - "target"
+    reward:
+      type: number
+    probability:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+    probDistribution:
+      type: object
+      description: A mapping from states to probability. Requires validation of values (sum equal to 1).
+      additionalProperties:
+        $ref: '#/components/schemas/probability'
+    rewardAndProbDistribution:
+      type: array
+      description: A pair (probDistribution, reward) (requires external validation)
+      minItems: 2
+      maxItems: 2
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/probDistribution'
+          - $ref: '#/components/schemas/reward'
+    TransitionsByAction:
+      type: object
+      description: a mapping from action to transitions and rewards
+      additionalProperties:
+        $ref: "#/components/schemas/rewardAndProbDistribution"
+    TransitionFunction:
+      type: object
+      description: a mapping from states to a dictionary of transitions by actions
+      additionalProperties:
+        $ref: "#/components/schemas/TransitionsByAction"
+    StatesSet:
+      type: array
+      items:
+        $ref: "#/components/schemas/stateName"
+    Service:
+      type: object
+      required:
+        - id
+        - features
+        - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/serviceId'
+        attributes:
+          type: object
+          required:
+            - type
+            - transitions
+            - initial_state
+            - final_states
+          properties:
+            type:
+              $ref: "#/components/schemas/deviceType"
+            transitions:
+               $ref: "#/components/schemas/TransitionFunction"
+            initial_state:
+              $ref: "#/components/schemas/stateName"
+            final_states:
+              $ref: "#/components/schemas/StatesSet"
+        features:
+          type: object
+          required:
+            - current_state
+            - transition_function
+          properties:
+            current_state:
+              $ref: "#/components/schemas/stateName"
+            transition_function:
+              $ref: "#/components/schemas/TransitionFunction"
+    TargetTransition:
+      type: array
+      description: A triple (state, prob, reward) (requires external validation)
+      minItems: 3
+      maxItems: 3
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/stateName'
+          - $ref: '#/components/schemas/probability'
+          - $ref: '#/components/schemas/reward'
+    TargetTransitionsByAction:
+      type: object
+      description: a mapping from action to transitions and rewards
+      additionalProperties:
+        $ref: "#/components/schemas/TargetTransition"
+    TargetTransitionFunction:
+      type: object
+      description: a mapping from states to a dictionary of transitions by actions
+      additionalProperties:
+        $ref: "#/components/schemas/TargetTransitionsByAction"
+    Target:
+      type: object
+      required:
+        - id
+        - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/serviceId'
+        attributes:
+          type: object
+          required:
+            - type
+            - transitions
+            - initial_state
+            - final_states
+          properties:
+            type:
+              $ref: "#/components/schemas/deviceType"
+            transitions:
+               $ref: "#/components/schemas/TargetTransitionFunction"
+            initial_state:
+              $ref: "#/components/schemas/stateName"
+            final_states:
+              $ref: "#/components/schemas/StatesSet"

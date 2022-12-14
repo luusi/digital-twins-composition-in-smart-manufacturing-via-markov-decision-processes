@@ -1,0 +1,33 @@
+{
+  "id": "provisioning_service",
+  "attributes": {
+    "type": "service",
+    "transitions": {
+      "available": {
+        "provisioning": [
+          {
+            "available": 1
+          },
+          -1
+        ]
+      }
+    },
+    "initial_state": "available",
+    "final_states": [
+      "available"
+    ]
+    },
+  "features": {
+    "transition_function": {
+      "available": {
+        "provisioning": [
+          {
+            "available": 1
+          },
+          -1
+        ]
+      }
+    },
+    "current_state": "available"
+  }
+}

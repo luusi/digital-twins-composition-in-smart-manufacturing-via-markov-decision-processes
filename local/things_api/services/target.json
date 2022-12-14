@@ -1,0 +1,113 @@
+{
+  "id": "target",
+  "attributes": {
+    "type": "target",
+    "transitions": {
+      "s0": {
+        "provisioning": [
+          "s1",
+          1,
+          0
+        ]
+      },
+      "s1": {
+        "moulding": [
+          "s2",
+          1,
+          0
+        ]
+      },
+      "s2": {
+        "check_moulding": [
+          "s3",
+          1,
+          0
+        ]
+      },
+      "s3": {
+        "drying": [
+          "s4",
+          1,
+          0
+        ]
+      },
+      "s4": {
+        "check_drying": [
+          "s5",
+          1,
+          0
+        ]
+      },
+      "s5": {
+        "first_baking": [
+          "s6",
+          1,
+          0
+        ]
+      },
+      "s6": {
+        "check_first_baking": [
+          "s7",
+          1,
+          0
+        ]
+      },
+      "s7": {
+        "enamelling": [
+          "s8",
+          1,
+          0
+        ]
+      },
+      "s8": {
+        "check_enamelling": [
+          "s9",
+          1,
+          0
+        ]
+      },
+      "s9": {
+        "painting": [
+          "s10",
+          1,
+          0
+        ]
+      },
+      "s10": {
+        "check_painting": [
+          "s11",
+          1,
+          0
+        ]
+      },
+      "s11": {
+        "second_baking": [
+          "s12",
+          1,
+          0
+        ]
+      },
+      "s12": {
+        "check_second_baking": [
+          "s13",
+          1,
+          0
+        ]
+      },
+      "s13": {
+        "shipping": [
+          "s0",
+          1,
+          1
+        ]
+      }
+    },
+    "initial_state": "s0",
+    "final_states": [
+      "s0"
+    ]
+  },
+  "features": {
+    "current_action": "provisioning"
+  }
+}
