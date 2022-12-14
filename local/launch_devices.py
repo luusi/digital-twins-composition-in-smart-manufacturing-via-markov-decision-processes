@@ -8,13 +8,13 @@ from typing import List
 CURRENT_DIRECTORY = Path(os.path.dirname(inspect.getfile(inspect.currentframe())))
 
 DEVICES = [
+    "provisioning_service.json",
     "drying_service.json",
     "enamelling_service.json",
-    "first_baking_service.json",
     "moulding_service.json",
+    "first_baking_service.json",
     "painting_human_service.json",
     "painting_service.json",
-    "provisioning_service.json",
     "second_baking_service.json",
     "shipping_service.json",
 ]
