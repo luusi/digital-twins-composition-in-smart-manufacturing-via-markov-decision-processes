@@ -8,7 +8,7 @@ from mdp_dp_rl.processes.mdp import MDP
 
 from digital_twins.target_simulator import TargetSimulator
 from local.things_api.client_wrapper import ClientWrapper
-from local.things_api.data import ServiceInstance, TargetInstance
+from local.things_api.data import ServiceInstance, TargetInstance, ServiceId
 from local.things_api.helpers import setup_logger
 from stochastic_service_composition.composition import composition_mdp
 
@@ -29,6 +29,7 @@ async def main(host: str, port: int) -> None:
 
     # get all services
     services: List[ServiceInstance] = await client.get_services()
+    services = sorted(services, key=lambda x: x.service_id)
     logger.info(f"Got {len(services)} available services")
 
     # get targets
@@ -91,6 +92,7 @@ async def main(host: str, port: int) -> None:
             for s in services:
                 logger.info(f"Restoring transition function for service '{s.service_id}'")
                 s.transition_function = s.service_spec.transition_function
+                logger.info(f"Updating transition function: '{s.transition_function}'")
                 s.current_state = s.service_spec.initial_state
             # reset system state (but not target state)
             system_state = [service.service_spec.initial_state for service in services]
